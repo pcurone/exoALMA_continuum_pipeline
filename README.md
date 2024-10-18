@@ -4,15 +4,15 @@ Expanded for the continuum analysis of the exoALMA sources (exoALMA V, Curone an
 
 
 
-# From ms table to uv tables
+# From ms file to uv tables
 
 Works only for ALMA data, not for VLA data (due to different polarization settings)
 
 1. Create a source folder (e.g., `AA_Tau`). Within it, create subfolders `frank_fit` and `galario_fit` for respective fits.
 2. Inside `frank_fit`, create folders `data`, `figs`, and `fits`.
-3. Download `AA_Tau_time_ave_continuum.ms` and place it in `frank_fit/data`, along with `ExportMS_split_contspw_1ch.py`.
-4. Use 'ExportMS_split_contspw_1ch.py' to:
-    a. Produce 'AA_Tau_continuum.ms' with continuum spws averaged to 1 channel (starting ms should already be averaged to 30s).
+3. Download your starting continuum ms file (for instance `AA_Tau_time_ave_continuum.ms`) and place it in `frank_fit/data`, along with `ExportMS_split_contspw_1ch.py`.
+4. Use `ExportMS_split_contspw_1ch.py` to:
+    a. Produce `AA_Tau_continuum.ms` with continuum spws averaged in frequency to 1 channel and in time to 30s bins.
     b. Generate visibility files for frank and galario ('AA_Tau_continuum.vis.npz' in 'frank_fit/data' and 'AA_Tau_galario_uvtable.txt' in 'galario_fit').
     
 Ensure to set the 'contspws' parameter correctly by specifying the appropriate numbers for the continuum-only spectral windows. Tests have demonstrated that including line spectral windows (of course flagging the corresponding line emissions) can increase noise levels.
