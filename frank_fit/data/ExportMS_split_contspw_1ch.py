@@ -8,10 +8,11 @@ target = 'AA_Tau'
 MS_filename = f'{target}_time_ave_continuum'
 listobs(vis=MS_filename+'.ms', listfile=MS_filename+'.ms.txt', overwrite=True) 
 
-contspws = '1,5,9,13,17,21,25,29,33,37,41,45'
+contspws = '1,5,9,13,17,21,25,29,33,37,41,45'   # Select the spws you're interested here, in this case I'm selecting the continuum spws only
 split(vis=MS_filename+'.ms', 
       width=8,
       spw=contspws,
+      timebin='30s',
       datacolumn='data',
       outputvis=target+'_continuum.ms', 
       keepflags=False,
@@ -75,7 +76,7 @@ np.savetxt(target+'_galario_uvtable.txt',
            fmt='%10.6e', delimiter='\t',
            header='Extracted from {}.\nwavelength[m] = {}\nColumns:\tu[m]\tv[m]\tRe(V)[Jy]\tIm(V)[Jy]\tweight'.format(target+'_continuum.ms', wle))
 print("# Measurement set exported to "+target+'_galario_uvtable.txt')
-#os.system(f'mv {target}_galario_uvtable.txt  ../../galario_fit')
+os.system(f'mv {target}_galario_uvtable.txt  ../../galario_fit')
 
 # output to npz file for frank
 os.system('rm -rf '+target+'_continuum.vis.npz')
