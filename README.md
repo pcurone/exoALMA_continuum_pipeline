@@ -65,3 +65,4 @@ How to proceed:
    ```
    python run_CLEAN_frank.py
    ```
+4. You can create summary plots comparing observed data and frank model with the `plot_images.ipynb` notebook.
