@@ -16,26 +16,26 @@ from frank.geometry import FixedGeometry
 from frank.utilities import convolve_profile, sweep_profile
 from frank.io import save_fit, load_sol
 from frank.make_figs import make_full_fig
+frank.enable_logging()
 from gofish import imagecube  # for the CLEAN profile
 sys.path.append('.')
 import diskdictionary as disk
 from myutils import Jybeam_to_Jysr, Jysr_to_Tb, Jysr_to_Tb_err, Jysr_to_Tb_RJ, Jysr_to_Tb_RJ_err
 
-frank.enable_logging()
 
 # controls
 target = 'J1852'
 
-im_dat = True
-frank  = True
-im_res = True
-annotate_res = True
-im_mdl = True
+im_dat = True   # CLEAN the observed data
+frank  = True   # Run the frank fit 
+im_res = True   # CLEAN the residuals (observed data - frank model) 
+annotate_res = True     # Annotate the residual image with the geometrical parameters that have been used
+im_mdl = True    # CLEAN the frank model
 
 
 #####  Plot settings #####
-img_lim = 1.3     # multiple of rout
-index_ticks = 0.2
+img_lim = 1.3     # multiple of rout, used to set the limit of the images and the intesity radial profile
+index_ticks = 0.2     # arcsec, spacing of the major ticks in figures
 
 
 # residuals color map
