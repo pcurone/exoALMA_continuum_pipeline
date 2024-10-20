@@ -24,7 +24,7 @@ from myutils import Jybeam_to_Jysr, Jysr_to_Tb, Jysr_to_Tb_err, Jysr_to_Tb_RJ, J
 
 
 # controls
-target = 'J1852'
+target = 'AA_Tau'
 
 im_dat = True   # CLEAN the observed data
 frank  = True   # Run the frank fit 
@@ -116,15 +116,15 @@ im = ax.imshow(dimg*1e3, origin='lower', cmap=cmap, extent=im_bounds,
 
 # beam
 beam = Ellipse((dRA_lims[0] + 0.1*np.diff(dRA_lims), 
-                dDEC_lims[0] + 0.1*np.diff(dDEC_lims)), bmaj, bmin, 90-bPA, 
+                dDEC_lims[0] + 0.1*np.diff(dDEC_lims)), bmaj, bmin, angle=90-bPA, 
                 edgecolor='w', lw=1.5, facecolor='none', hatch='/////')
 ax.add_artist(beam)
 
 # limits, labeling
 ax.set_xlim(dRA_lims)
 ax.set_ylim(dDEC_lims)
-ax.set_xlabel('RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
-ax.set_ylabel('Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 
 # axes style
 index_ticks = 0.5
@@ -290,15 +290,15 @@ if os.path.exists('data/'+target+'_resid.fits'):
 
     # beam
     beam = Ellipse((dRA_lims[0] + 0.1*np.diff(dRA_lims), 
-                    dDEC_lims[0] + 0.1*np.diff(dDEC_lims)), bmaj, bmin, 90-bPA, 
+                    dDEC_lims[0] + 0.1*np.diff(dDEC_lims)), bmaj, bmin, angle=90-bPA, 
                     edgecolor='k', lw=1.5, facecolor='none', hatch='/////')
     ax.add_artist(beam)
 
     # limits, labeling
     ax.set_xlim(dRA_lims)
     ax.set_ylim(dDEC_lims)
-    ax.set_xlabel('RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
-    ax.set_ylabel('Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+    ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+    ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 
     # axes style
     ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
@@ -378,8 +378,8 @@ ax.plot( xb * np.cos(PAr) + yb * np.sin(PAr),
 # limits, labeling
 ax.set_xlim(dRA_lims)
 ax.set_ylim(dDEC_lims)
-ax.set_xlabel('RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
-ax.set_ylabel('Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 
 # axes style
 ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
@@ -459,7 +459,7 @@ for ax in axs.flat:
 
     ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=7,width=2.5, length=6,direction='in',color='k')
     ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=7,width=1.5, length=4,direction='in',color='k')
-    ax.set_xlabel('$R \,\,$ [arcsec]', fontsize = 17, labelpad=10)
+    ax.set_xlabel(r'$R \,\,$ [arcsec]', fontsize = 17, labelpad=10)
     ax.set_ylabel('Brightness temperature [K]', fontsize = 17, labelpad=10)
     ax.legend(fontsize=13)
     
@@ -490,7 +490,7 @@ for ax in axs.flat:
 
     ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=7,width=2.5, length=6,direction='in',color='k')
     ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=7,width=1.5, length=4,direction='in',color='k')
-    ax.set_xlabel('$R \,\,$ [arcsec]', fontsize = 17, labelpad=10)
+    ax.set_xlabel(r'$R \,\,$ [arcsec]', fontsize = 17, labelpad=10)
     ax.set_ylabel('Brightness temperature [K]', fontsize = 17, labelpad=10)
     ax.legend(fontsize=13)
     
@@ -565,15 +565,15 @@ im = ax.imshow(dimg*1e3, origin='lower', cmap=cmap, extent=im_bounds,
 
 # beam
 beam = Ellipse((dRA_lims[0] + 0.1*np.diff(dRA_lims), 
-                dDEC_lims[0] + 0.1*np.diff(dDEC_lims)), bmaj, bmin, 90-bPA, 
+                dDEC_lims[0] + 0.1*np.diff(dDEC_lims)), bmaj, bmin, angle=90-bPA, 
                 edgecolor='w', lw=1.5, facecolor='none', hatch='/////')
 ax.add_artist(beam)
 
 # limits, labeling
 ax.set_xlim(dRA_lims)
 ax.set_ylim(dDEC_lims)
-ax.set_xlabel('RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
-ax.set_ylabel('Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 
 # axes style
 ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
