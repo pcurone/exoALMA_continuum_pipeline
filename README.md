@@ -48,6 +48,8 @@ In the case of highly non-axisymmetric sources use a 2D model (here considering 
 
 # frank
 
+You can check here the nice and detailed frank documentation https://discsim.github.io/frank/
+
 Within the `frank_fit` folder you'll find:
 - `data_imaging.py` function to CLEAN the data.
 - `diskdictionary.py` file to store parameters of the disk, the CLEANing and the frank fit.
