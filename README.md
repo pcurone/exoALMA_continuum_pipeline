@@ -7,6 +7,7 @@ Codes required to be installed (apart from all the usual python packages):
 - galario (https://mtazzari.github.io/galario/). _Problems to install it on an Apple machine with ARM Chip, so I ended up creating an x86 environment using Rosetta 2 where I installed galario through the usual conda._ uvplot (https://github.com/mtazzari/uvplot).
 - emcee (https://emcee.readthedocs.io/en/stable/user/install/) and corner (https://corner.readthedocs.io/en/latest/install/).
 - frank (https://github.com/discsim/frank).
+- gofish (https://github.com/richteague/gofish).
 
 
 
