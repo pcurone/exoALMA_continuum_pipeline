@@ -2,6 +2,10 @@ Pipeline to perform frank fits initially inspired by the procedure used by Sean 
 
 Expanded for the continuum analysis of the exoALMA sources (exoALMA V, Curone and exoALMA) including galario fits for getting the geometrical parameters.
 
+Codes required to be installed (apart from all the usual python packages):
+- CASA (https://casa.nrao.edu/casa_obtaining.shtml)
+- galario (https://mtazzari.github.io/galario/)
+
 
 
 # From ms file to uv tables
