@@ -72,11 +72,11 @@ wle = clight / freqs.mean()  # [m]
 
 # For galario
 np.savetxt(target+'_galario_uvtable.txt',
-           np.column_stack([um, vm, vis.real, vis.imag, wgt]),
+           np.column_stack([u, v, vis.real, vis.imag, wgt]),
            fmt='%10.6e', delimiter='\t',
-           header='Extracted from {}.\nwavelength[m] = {}\nColumns:\tu[m]\tv[m]\tRe(V)[Jy]\tIm(V)[Jy]\tweight'.format(target+'_continuum.ms', wle))
+           header='Extracted from {}.\nwavelength[m] = {}\nColumns:\tu[wavelength]\tv[wavelength]\tRe(V)[Jy]\tIm(V)[Jy]\tweight'.format(target+'_continuum.ms', wle))
 print("# Measurement set exported to "+target+'_galario_uvtable.txt')
-os.system(f'mv {target}_galario_uvtable.txt  ../../galario_fit')
+#os.system(f'mv {target}_galario_uvtable.txt  ../../galario_fit')
 
 # output to npz file for frank
 os.system('rm -rf '+target+'_continuum.vis.npz')
