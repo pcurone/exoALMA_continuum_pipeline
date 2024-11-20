@@ -35,7 +35,7 @@ im_mdl = True    # CLEAN the frank model
 
 #####  Plot settings #####
 img_lim = 1.3     # multiple of rout, used to set the limit of the images and the intesity radial profile
-index_ticks = 0.2     # arcsec, spacing of the major ticks in figures
+index_ticks = 0.5     # arcsec, spacing of the major ticks in figures
 
 
 # residuals color map

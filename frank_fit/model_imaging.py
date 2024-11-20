@@ -7,6 +7,14 @@ import diskdictionary as disk
 # read which disk this is about
 target = str(np.loadtxt('whichdisk.txt', dtype='str'))
 
+ACA_disks = ["DM_Tau", "LkCa_15", "HD_34282", "J1604",
+                     "J1615", "V4046_Sgr", "AA_Tau"]
+
+if any(target == ACA_disk for ACA_disk in ACA_disks):
+              grid = 'mosaic'
+else:
+              grid = 'standard'
+
 mask_ra = disk.disk[target]['mask_ra']
 mask_dec = disk.disk[target]['mask_dec']
 mask_pa = disk.disk[target]['PA'] #position angle of mask in degrees
@@ -22,14 +30,14 @@ ImportMS('data/'+target+'_continuum.ms',
 imagename = 'data/'+target+'_model'
 for ext in ['.image', '.mask', '.model', '.pb', '.psf', '.residual', '.sumwt']:
     os.system('rm -rf '+imagename+ext)
-tclean(vis='data/'+target+'_continuum.model.ms', imagename=imagename, 
-       specmode='mfs', deconvolver=disk.disk[target]['cdeconvolver'],
-       scales=disk.disk[target]['cscales'], nterms=disk.disk[target]['cnterms'],mask=mask,  
-       imsize=disk.disk[target]['cimsize'], cell=disk.disk[target]['ccell'], gain=disk.disk[target]['cgain'],
+tclean(vis='data/'+target+'_continuum.model.ms', imagename=imagename, specmode='mfs', 
+       deconvolver=disk.disk[target]['cdeconvolver'], scales=disk.disk[target]['cscales'], 
+       nterms=disk.disk[target]['cnterms'],mask=mask, imsize=disk.disk[target]['cimsize'], 
+       gridder=grid, cell=disk.disk[target]['ccell'], gain=disk.disk[target]['cgain'],
        cycleniter=disk.disk[target]['ccycleniter'], cyclefactor=disk.disk[target]['ccyclefactor'], 
        weighting='briggs', robust=disk.disk[target]['crobust'], uvtaper=disk.disk[target]['ctaper'],
        niter=disk.disk[target]['cniter'], threshold=f"{disk.disk[target]['cthresh']*disk.disk[target]['RMS']}mJy", 
-       savemodel='none')
+       interactive=False, savemodel='none')
 
 # Export FITS files of the original 
 exportfits(imagename+'.image', imagename+'.fits', overwrite=True)
