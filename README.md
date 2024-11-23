@@ -4,7 +4,7 @@ Expanded for the continuum analysis of the exoALMA sources (exoALMA IV, Curone a
 
 Codes required to be installed (apart from all the usual python packages):
 - CASA (https://casa.nrao.edu/casa_obtaining.shtml).
-- galario (https://mtazzari.github.io/galario/). _Problems to install it on an Apple machine with ARM Chip, so I ended up creating an x86 environment using Rosetta 2 where I installed galario through the usual conda.
+- galario (https://mtazzari.github.io/galario/). _(Problems to install it on an Apple machine with ARM Chip, so I ended up creating an x86 environment using Rosetta 2 where I installed galario through the usual conda)_.
 - uvplot (https://github.com/mtazzari/uvplot).
 - emcee (https://emcee.readthedocs.io/en/stable/user/install/), corner (https://corner.readthedocs.io/en/latest/install/), and h5py (https://docs.h5py.org/en/latest/build.html).
 - frank (https://github.com/discsim/frank).
