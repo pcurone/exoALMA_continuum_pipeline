@@ -1,7 +1,7 @@
 # To be run inside a CASA terminal
 
 import os
-import numpy as np
+import numpy as np 
 
 target = 'AA_Tau'
 
@@ -69,16 +69,25 @@ u, v = um * freqs / 2.9979e8, vm * freqs / 2.9979e8
 clight = 299792458
 wle = clight / freqs.mean()  # [m]
 
-
 # For galario
-np.savetxt(target+'_galario_uvtable.txt',
-           np.column_stack([u, v, vis.real, vis.imag, wgt]),
-           fmt='%10.6e', delimiter='\t',
-           header='Extracted from {}.\nwavelength[m] = {}\nColumns:\tu[wavelength]\tv[wavelength]\tRe(V)[Jy]\tIm(V)[Jy]\tweight'.format(target+'_continuum.ms', wle))
-print("# Measurement set exported to "+target+'_galario_uvtable.txt')
-#os.system(f'mv {target}_galario_uvtable.txt  ../../galario_fit')
+# Create the formatted header manually
+header = (
+    f"# Extracted from {target}_continuum.ms.\n"
+    f"# wavelength[m]\n"
+    f"{wle}\n"
+    f"# Columns:\tu[wavelength]\tv[wavelength]\tRe(V)[Jy]\tIm(V)[Jy]\tweight"
+)
+# Save the data
+np.savetxt(
+    f"{target}_galario_uvtable.txt",
+    np.column_stack([u, v, vis.real, vis.imag, wgt]),
+    fmt='%10.6e',
+    delimiter='\t',
+    header=header,
+    comments=""  # Removes the default '#' added by savetxt to the header
+)
 
-# output to npz file for frank
+# Output to npz file for frank
 os.system('rm -rf '+target+'_continuum.vis.npz')
 np.savez(target+'_continuum.vis', u=u, v=v, Vis=vis, Wgt=wgt)
 print("# Measurement set exported to "+target+'_continuum.vis.npz')

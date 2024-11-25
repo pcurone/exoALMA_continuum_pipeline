@@ -6,18 +6,13 @@ def ImportMS(msfile, modelfile, suffix='model', make_resid=False):
     if make_resid:
         suffix = 'resid'
 
-    # parse msfile name
-    filename = msfile
-    if filename[-3:] != '.ms':
-        print("MS name must end in '.ms'")
-        return
-
     # strip off the '.ms'
-    MS_filename = filename.replace('.ms', '')
+    MS_path = msfile
+    MS_filename = f'CLEAN/{os.path.splitext(os.path.basename(MS_path))[0]}'
 
     # copy the data MS into a model MS
-    os.system('rm -rf '+MS_filename+'.'+suffix+'.ms')
-    os.system('cp -r '+filename+' '+MS_filename+'.'+suffix+'.ms')
+    os.system(f'rm -rf {MS_filename}.{suffix}.ms')
+    os.system(f'cp -r {msfile} {MS_filename}.{suffix}.ms')
 
     # open the model file and load the data
     tb.open(MS_filename+'.'+suffix+'.ms')

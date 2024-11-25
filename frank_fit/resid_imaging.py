@@ -4,8 +4,8 @@ execfile('ImportMS.py', globals())
 sys.path.append('.')
 import diskdictionary as disk
 
-# read which disk this is about
-target = str(np.loadtxt('whichdisk.txt', dtype='str'))
+# Get target from environment variable
+target = os.environ['TARGET']
 
 ACA_disks = ["DM_Tau", "LkCa_15", "HD_34282", "J1604",
                      "J1615", "V4046_Sgr", "AA_Tau"]
@@ -23,15 +23,15 @@ mask_semiminor = mask_semimajor*np.cos(disk.disk[target]['incl'] * np.pi/180)
 mask = f"ellipse[[{mask_ra},{mask_dec}], [{mask_semimajor}arcsec, {mask_semiminor}arcsec], {mask_pa}deg]"
 
 # load model and residual visibilities into MS format
-ImportMS('data/'+target+'_continuum.ms', 
+ImportMS('../data/'+target+'_continuum.ms', 
          'fits/'+target+'_frank_uv_fit', make_resid=True)
 
 # Perform the imaging
-imagename = 'data/'+target+'_resid'
+imagename = 'CLEAN/'+target+'_resid'
 for ext in ['.image*', '.mask', '.model*', '.pb*', '.psf*', '.residual*',
             '.sumwt*', '.alpha*']:
     os.system('rm -rf '+imagename+ext)
-tclean(vis='data/'+target+'_continuum.resid.ms', imagename=imagename, specmode='mfs', 
+tclean(vis='CLEAN/'+target+'_continuum.resid.ms', imagename=imagename, specmode='mfs', 
        deconvolver=disk.disk[target]['cdeconvolver'], scales=disk.disk[target]['cscales'], 
        nterms=disk.disk[target]['cnterms'],mask=mask, imsize=disk.disk[target]['cimsize'], 
        gridder=grid, cell=disk.disk[target]['ccell'], gain=disk.disk[target]['cgain'],
