@@ -16,11 +16,15 @@ Codes required to be installed (apart from all the usual python packages):
 
 Works only for ALMA data, not for VLA data (due to different polarization settings)
 
-1. Create a source folder (e.g., `AA_Tau`). Within it, copy the `frank_fit` and `galario_fit` you find here.
-2. Download your starting continuum ms file (for instance `AA_Tau_time_ave_continuum.ms`) and place it in `frank_fit/data`, where you will also find `ExportMS_split_contspw_1ch.py`.
-3. Within `frank_fit/data`, use `ExportMS_split_contspw_1ch.py` to:
+1. Create a source folder (e.g., `AA_Tau`). Within it, copy the `data`, `frank_fit` and `galario_fit` folders you find here.
+2. Download your starting continuum ms file (for instance `AA_Tau_time_ave_continuum.ms`) and place it in `data`, where you will also find `ExportMS_split_contspw_1ch.py`.
+3. In `data`, open a CASA terminal and type
+   ```
+   execute('ExportMS_split_contspw_1ch.py')`
+   ``` 
+   to:
    1. Produce `AA_Tau_continuum.ms` with continuum spws averaged in frequency to 1 channel and in time to 30s bins.
-   2. Generate uv tables for frank and galario (`AA_Tau_continuum.vis.npz` for frank and `AA_Tau_galario_uvtable.txt` for galario to be moved to the `galario_fit` folder)
+   2. Generate uv tables for frank and galario (`AA_Tau_continuum.vis.npz` for frank and `AA_Tau_galario_uvtable.txt` for galario)
 
 # galario (to be updated)
 
