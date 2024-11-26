@@ -1,4 +1,4 @@
-Pipeline to perform frank fits initially inspired by the procedure used by Sean Andrews in Andrews et al. 2021. 
+Pipeline to perform frank fits initially inspired by the procedure used by Sean Andrews in Andrews et al. 2021 (https://ui.adsabs.harvard.edu/abs/2021ApJ...916...51A/abstract, https://github.com/seanandrews/DSHARP_CPDs). 
 
 Expanded for the continuum analysis of the exoALMA sources (exoALMA IV, Curone and exoALMA) including galario fits for getting the geometrical parameters.
 
