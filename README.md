@@ -37,7 +37,7 @@ Check the [galario documentation](https://mtazzari.github.io/galario/) for detai
 For mostly axisymmetric sources, use a 1D profile model. Within the `galario_fit` folder:
 
 1. Add your parametric model to `galario_1D_model_functions.py`, if not already included.
-2. Adjust the fitting parameters in the “MODIFY HERE” section of `galario_fit_1D.py`. Here, you can choose your model, number of walkers and steps, radial grid, initial guess for the model parameters and priors.
+2. Adjust the fitting parameters in the “MODIFY HERE” section of `galario_fit_1D.py`. Here, you can choose your model, number of walkers and steps, radial grid, initial guess for the model parameters, and priors.
 3. Run the fit:
    ```
    python galario_fit_1D.py
@@ -63,19 +63,19 @@ For highly non-axisymmetric sources (here, `CQ Tau`), use a 2D model. Within the
 5. Experiment with multiple runs for convergence.
 6. You can simply plot the results from a stored backend with:
    ```
-   python plot_results_galario_fit_1D.py
+   python plot_results_galario_fit_2D.py
    ```
 
 # frank
 
 Refer to the [frank documentation](https://discsim.github.io/frank/) for detailed guidance. 
 
-Within the `frank_fit` folder you'll find:
+Within the `frank_fit` folder you will find:
 - `data_imaging.py` function to CLEAN the data.
 - `diskdictionary.py` file to store parameters of the disk, the CLEANing and the frank fit.
 - `model_imaging.py` function to CLEAN the frank model visibilities as if they were data, using the same uv locations of the observation.
 - `resid_imaging` function to CLEAN the residuals obtained by subtracting the frank fit from the observed data.
-- `ImportMS.py` function called by `model_imaging.py` and `resid_imaging.py` to produce the model and residuals ms tables (`frank_fit/CLEAN/AA_Tau_continuum.model.ms` and `frank_fit/CLEAN/AA_Tau_continuum.resid.ms`) from `data/AA_Tau_continuum.ms`
+- `ImportMS.py` function called by `model_imaging.py` and `resid_imaging.py` to produce the model and residuals MS tables (`frank_fit/CLEAN/AA_Tau_continuum.model.ms` and `frank_fit/CLEAN/AA_Tau_continuum.resid.ms`) from `data/AA_Tau_continuum.ms`
 - `run_CLEAN_frank.py` is the main file. It performs the frank fit, saving the results in the `frank_fit/fits` folder, and runs the CLEANing of the data, the frank model, and the residuals, saving the images in the `frank_fit/figs` folder.
 
 How to proceed:
@@ -87,7 +87,7 @@ How to proceed:
       1. `im_dat` to CLEAN the observed data.
       2. `frank`  to perform the frank fit.
       3. `im_res` to CLEAN the residuals (observed data - frank model).
-      4. `annotate_res` to annotate the residual image (saved in the `figs` folder) with the geometrical parameters that have been used.
+      4. `annotate_res` to annotate the residual image (saved in the `figs` folder) with the geometrical parameters that have been used and possible ellipses.
       5. `im_mdl` to CLEAN the frank model.
 3. Run everything with
    ```
