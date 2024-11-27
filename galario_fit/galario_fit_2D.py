@@ -31,8 +31,8 @@ uvtable_filename = f'../data/{target}_galario_uvtable.txt'
 # Select model
 selected_model = "2rings_2arcs"
 
-nwalkers = 41
-nsteps = 2
+nwalkers = 100
+nsteps = 5000
 
 # priors
 # fi(log10[Jy/sr]), ri(arcsec), sigmai(arcsec),
