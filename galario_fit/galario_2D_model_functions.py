@@ -3,7 +3,14 @@ import numpy as np
 # Enable/disable numba
 use_numba = True
 if use_numba:
-    from numba import njit
+    try:
+        print('Using numba')
+        from numba import njit
+    except ImportError:
+        print("Apparently, numba is not installed. Setting `use_numba = False` in `galario_2D_model_functions.py`.")
+        use_numba = False
+else:
+    print('Not using numba')
 
 # Helper to conditionally apply njit
 def conditional_njit(func):
@@ -16,7 +23,7 @@ def conditional_njit(func):
 
 # define a central Gaussian in 2D on the image array (with numba to make it faster)
 @conditional_njit
-def Gauss_2D(f, sigma, inc_rad):
+def Gauss_2D(x, y, f, sigma, inc_rad):
     r = ((x / np.cos(inc_rad))**2. + y**2.)**0.5
     imagemap = f * np.exp(-r**2. / (2. * sigma**2.))
     return imagemap
@@ -24,7 +31,7 @@ def Gauss_2D(f, sigma, inc_rad):
 
 # define a Gaussian ring in 2D on the image array (with numba to make it faster)
 @conditional_njit
-def ring_2D(f, R, sigma, inc_rad):
+def ring_2D(x, y, f, R, sigma, inc_rad):
     r = ((x / np.cos(inc_rad))**2. + y**2.)**0.5
     imagemap = f * np.exp(-((r - R)**2.) / (2. * sigma**2.))
     return imagemap
@@ -41,12 +48,13 @@ sigma_phi = angle in deg of the azimuthal extension of the arc,
 or better, angle after which there is the exponential cutoff
 '''
 @conditional_njit
-def arc_2D(f, R, sigma, phi_rad, sigma_phi_rad, inc_rad):
+def arc_2D(x, y, f, R, sigma, phi_rad, sigma_phi_rad, inc_rad):
     r = ((x / np.cos(inc_rad))**2. + y**2.)**0.5
     phi = np.arctan2(y, x / np.cos(inc_rad)) - phi_rad
-    phi = (phi + np.pi) % (2 * np.pi) - np.pi  # Normalize angle to [-π, π]
+    phi = (phi + np.pi) % (2 * np.pi) - np.pi
     imagemap = f * np.exp(-((r - R)**2.) / (2. * sigma**2.)) * np.exp(-phi**2. / (2. * sigma_phi_rad**2.))
     return imagemap
+    
 
 
 
@@ -54,40 +62,40 @@ def arc_2D(f, R, sigma, phi_rad, sigma_phi_rad, inc_rad):
 
 # 1 ring + 1 arc
 @conditional_njit
-def Image2D_1ring_1arc(f1, r1, sigma1, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad):
-    model_image = ring_2D(f1, r1, sigma1, inc_rad) + arc_2D(f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad)
+def Image2D_1ring_1arc(x, y, f1, r1, sigma1, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad):
+    model_image = ring_2D(x, y, f1, r1, sigma1, inc_rad) + arc_2D(x, y, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad)
     return model_image
 
 # 1 Central Gaussian + 2 rings + 1 arc
 @conditional_njit
-def Image2D_1Gauss_2rings_1arc(f0, sigma0, f1, r1, sigma1, f2, r2, sigma2, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad):
+def Image2D_1Gauss_2rings_1arc(x, y, f0, sigma0, f1, r1, sigma1, f2, r2, sigma2, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad):
     model_image = (
-        Gauss_2D(f0, sigma0, inc_rad)
-        + ring_2D(f1, r1, sigma1, inc_rad)
-        + ring_2D(f2, r2, sigma2, inc_rad)
-        + arc_2D(f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad)
+        Gauss_2D(x, y, f0, sigma0, inc_rad)
+        + ring_2D(x, y, f1, r1, sigma1, inc_rad)
+        + ring_2D(x, y, f2, r2, sigma2, inc_rad)
+        + arc_2D(x, y, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad)
     )
     return model_image
 
 # 2 rings + 2 arcs
 @conditional_njit
-def Image2D_2rings_2arcs(f1, r1, sigma1, f2, r2, sigma2, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, f_arc2, r_arc2, sigmar_arc2, phi_arc2, sigmaphi_arc2, inc_rad):
+def Image2D_2rings_2arcs(x, y, f1, r1, sigma1, f2, r2, sigma2, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, f_arc2, r_arc2, sigmar_arc2, phi_arc2, sigmaphi_arc2, inc_rad):
     model_image = (
-        ring_2D(f1, r1, sigma1, inc_rad)
-        + ring_2D(f2, r2, sigma2, inc_rad)
-        + arc_2D(f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad)
-        + arc_2D(f_arc2, r_arc2, sigmar_arc2, phi_arc2, sigmaphi_arc2, inc_rad)
+        ring_2D(x, y, f1, r1, sigma1, inc_rad)
+        + ring_2D(x, y, f2, r2, sigma2, inc_rad)
+        + arc_2D(x, y, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad)
+        + arc_2D(x, y, f_arc2, r_arc2, sigmar_arc2, phi_arc2, sigmaphi_arc2, inc_rad)
     )
     return model_image
 
 # 3 rings + 1 arcs
 @njit(fastmath=True, parallel=True)
-def Image2D_3rings_1arc(f1, r1, sigma1, f2, r2, sigma2, f3, r3, sigma3, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad):
+def Image2D_3rings_1arc(x, y, f1, r1, sigma1, f2, r2, sigma2, f3, r3, sigma3, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad):
     model_image = (
-        ring_2D(f1, r1, sigma1, inc_rad)
-        + ring_2D(f2, r2, sigma2, inc_rad)
-        + ring_2D(f3, r3, sigma3, inc_rad)
-        + arc_2D(f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad)
+        ring_2D(x, y, f1, r1, sigma1, inc_rad)
+        + ring_2D(x, y, f2, r2, sigma2, inc_rad)
+        + ring_2D(x, y, f3, r3, sigma3, inc_rad)
+        + arc_2D(x, y, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad)
     )
     return model_image
 

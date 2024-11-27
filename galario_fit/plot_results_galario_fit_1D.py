@@ -28,12 +28,14 @@ uvtable_filename = f'../data/{target}_galario_uvtable.txt'
 # Select model
 selected_model = "FourRingProfile_PointSource"
 
+nwalkers = 100
+
 # radial grid parameters
 Rmin = 1e-4  # arcsec
 dR = 0.0001    # arcsec
 nR = 40000
 
-nwalkers = 40
+
 
 ##################################
 #####   IMPORT THE UVTABLE   #####
@@ -63,6 +65,9 @@ model_info = model_registry[selected_model]
 model_function = model_info["function"]
 base_parameters = model_info["parameters"]
 param_labels = model_info["labels"]
+params = [param for param in base_parameters if param not in ["Rmin", "dR", "nR"]]
+params.extend(["inc", "PA", "dRA", "dDec"])  
+ndim = len(params)
 
 # Backend setup and initialization
 backend_filename = f"{target}_galario_emcee_backend_{selected_model}_{nwalkers}walkers.h5"
@@ -103,9 +108,6 @@ plt.savefig(f'Cornerplot_galario_{selected_model}_{nwalkers}walkers_{backend.ite
 #####   UV-PLOT   #####
 #######################
 
-params = [param for param in base_parameters if param not in ["Rmin", "dR", "nR"]]
-params.extend(["inc", "PA", "dRA", "dDec"])  
-ndim = len(params)
 bestfit = [np.percentile(samples[:, i], 50) for i in range(ndim)]
 param_dict = {key: val for key, val in zip(params, bestfit)}
 

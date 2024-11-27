@@ -3,6 +3,10 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
+                               AutoMinorLocator)
+from scipy import ndimage
 import os
 import time
 
@@ -12,57 +16,23 @@ import corner
 
 # Convert from arcsec and deg to radians
 from galario import arcsec, deg
-from galario.double import chi2Profile, sampleProfile, get_image_size
+from galario.double import chi2Image, sampleImage, get_image_size
 from uvplot import COLUMNS_V0
 
 from uvplot import UVTable
-from galario_1D_model_functions import model_registry
+from galario_2D_model_functions import model_registry
 ##########################################################################
 
 
 ##################### MODIFY HERE #####################
-target = 'AA_Tau'
+target = 'CQ_Tau'
 
 uvtable_filename = f'../data/{target}_galario_uvtable.txt'
 
 # Select model
-selected_model = "FourRingProfile_PointSource"
+selected_model = "2rings_2arcs"
 
-nwalkers = 100
-nsteps = 5000
-
-# radial grid parameters
-Rmin = 1e-4  # arcsec
-dR = 0.0001    # arcsec
-nR = 40000
-
-# f_i, r_i, sigma_i, inc, PA, dRA, dDec
-# initial guess for the parameters
-p0 = [15.5,   10.06, 0.35, 0.054,     9.97, 0.28, 0.037,   9.65, 0.66, 0.02,    9.5, 0.42, 0.39,   58.52, 93.8, -0.0055, 0.005] #  
-# parameter space domain
-p_ranges = [[1., 20.],
-            
-            [1., 15.],
-            [0., 0.6], 
-            [0., 0.8], 
-
-            [1., 15.],
-            [0., 1.0], 
-            [0., 1.0], 
-
-            [1., 15.],
-            [0., 1.0], 
-            [0., 1.0], 
-
-            [1., 15.],
-            [0., 1.5], 
-            [0.0, 1.5],
-
-            [0., 90.],
-            [0., 180.],
-            [-2, 2], 
-            [-2, 2]]
-
+nwalkers = 41
 
 
 ##################################
@@ -77,124 +47,34 @@ wle = np.loadtxt(uvtable_filename, skiprows=2, max_rows=1)
 u, v, Re, Im, w = np.require(np.loadtxt(uvtable_filename, skiprows=4, unpack=True), requirements='C')
 
 
-
-#####################################################
-#####   DEFINE THE PRIOR PROBABILITY FUNCTION   #####
-#####################################################
-
-'''
-Log of uniform prior probability function
-'''
-def lnpriorfn(p, par_ranges):
-    for i in range(len(p)):
-        if p[i] < par_ranges[i][0] or p[i] > par_ranges[i][1]:
-            return -np.inf
-
-    return 0.0
-
-
-#########################################################
-#####   DEFINE THE POSTERIOR PROBABILITY FUNCTION   #####
-#########################################################
-
-def lnpostfn(p, p_ranges, Rmin, dR, nR, nxy, dxy, u, v, Re, Im, w):
-    """ Log of posterior probability function """
-
-    lnprior = lnpriorfn(p, p_ranges)  # apply prior
-    if not np.isfinite(lnprior):
-        return -np.inf
-    
-    # Unpack the parameters dynamically
-    param_dict = {key: val for key, val in zip(params, p)}
-
-    # Convert specific parameters to required units
-    for key in ["sigma0", "sigma1", "sigma2", "sigma3", "sigma4", "sigma5", "sigma6", "r1", "r2", "r3", "r4", "r5", "r6", "dRA", "dDec"]:
-        if key in param_dict:
-            param_dict[key] *= arcsec
-    
-    for key in ["inc", "PA"]:
-        if key in param_dict:
-            param_dict[key] *= deg
-    
-    for key in ["f0", "f1", "f2", "f3", "f4", "f5", "f6"]:
-        if key in param_dict:
-            param_dict[key] = 10.0**param_dict[key]
-
-    Rmin *= arcsec
-    dR *= arcsec
-
-    # Extract the necessary parameters for chi2Profile
-    inc = param_dict["inc"]
-    PA = param_dict["PA"]
-    dRA = param_dict["dRA"]
-    dDec = param_dict["dDec"]
-    funtion_param_dict = {key: val for key, val in param_dict.items() if key not in ["inc", "PA", "dRA", "dDec", "Rmin", "dR", "nR"]}
-
-    # Compute the model brightness profile
-    f = model_function(**funtion_param_dict, Rmin=Rmin, dR=dR, nR=nR)
-
-    # Compute chi2
-    chi2 = chi2Profile(f, Rmin, dR, nxy, dxy, u, v, Re, Im, w,
-                       inc=inc, PA=PA, dRA=dRA, dDec=dDec)
-    
-    #print(np.min(f),np.max(f),np.isnan(f.any()),chi2)
-
-    return -0.5 * chi2 + lnprior
-
-
-
 ########################################
 #####   DETERMINE THE IMAGE SIZE   #####
 ########################################
 
-# compute the optimal image size
+# compute the optimal image size (nxy=number of pixels, dxy=pixel size in radians)
 nxy, dxy = get_image_size(u, v, verbose=True, f_min=5., f_max=2.5)
+
+# define the image grid in radians
+xarr = np.linspace(-nxy/2*dxy, nxy/2*dxy, nxy)
+yarr = np.linspace(-nxy/2*dxy, nxy/2*dxy, nxy)
+x,y = np.meshgrid(xarr, yarr)
 
 
 ###############################
 #####   SETUP THE MCMC    #####
 ###############################
 
-
 model_info = model_registry[selected_model]
 model_function = model_info["function"]
 base_parameters = model_info["parameters"]
 param_labels = model_info["labels"]
-params = [param for param in base_parameters if param not in ["Rmin", "dR", "nR"]]
+params = [param for param in base_parameters]
 params.extend(["inc", "PA", "dRA", "dDec"])  
 ndim = len(params)
 
 # Backend setup and initialization
-backend_filename = f"{target}_galario_emcee_backend_{selected_model}_{nwalkers}walkers.h5"
-
-if os.path.exists(backend_filename):
-    print(f"Using existing backend file: {backend_filename}")
-    backend = HDFBackend(backend_filename)
-    print(f"Backend has {backend.iteration} iterations")
-
-    # Retrieve the last positions if samples exist
-    if backend.iteration > 0:
-        pos = backend.get_last_sample().coords
-    else:
-        pos = [p0 + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
-else:
-    print(f"Creating a new backend file: {backend_filename}")
-    backend = HDFBackend(backend_filename)
-    backend.reset(nwalkers, ndim)
-    pos = [p0 + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]   # initialize the walkers with an ndim-dimensional Gaussian ball
-
-sampler = EnsembleSampler(nwalkers, ndim, lnpostfn, 
-                          args=[p_ranges, Rmin, dR, nR, nxy, dxy, u, v, Re, Im, w],
-                          backend=backend)
-
-
-#############################
-#####   RUN THE MCMC    #####
-#############################
-
-# execute the MCMC
-print('Walking...')
-pos, prob, state = sampler.run_mcmc(pos, nsteps, progress=True)
+backend_filename = f"{target}_galario_2D_emcee_backend_{selected_model}_{nwalkers}walkers.h5"
+backend = HDFBackend(backend_filename)
 
 
 ####################################
@@ -224,46 +104,93 @@ fig = corner.corner(samples, labels=param_labels,
                     label_kwargs={'labelpad':20, 'fontsize':15}, fontsize=8, title_fmt = '.5f')
 
 #plt.show()
-plt.savefig(f'Cornerplot_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
+plt.savefig(f'Cornerplot_galario_2D_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
 
 
-#######################
-#####   UV-PLOT   #####
-#######################
+#####################################
+#####   IMAGE OF THE 2D MODEL   #####
+#####################################
 
 bestfit = [np.percentile(samples[:, i], 50) for i in range(ndim)]
 
 param_dict = {key: val for key, val in zip(params, bestfit)}
 
 # Convert specific parameters to required units
-for key in ["sigma0","sigma1", "sigma2", "sigma3", "sigma4", "sigma5", "sigma6", "r1", "r2", "r3", "r4", "r5", "r6", "dRA", "dDec"]:
+for key in ["sigma0", "sigma1", "sigma2", "sigma3", "sigma4", "sigma5", "sigma6", 
+            "r1", "r2", "r3", "r4", "r5", "r6", 
+            "r_arc1", "r_arc2", "r_arc3", "r_arc4", "r_arc5", "r_arc6",
+            "sigmar_arc1", "sigmar_arc2", "sigmar_arc3", "sigmar_arc4", "sigmar_arc5", "sigmar_arc6", 
+            "dRA", "dDec"]:
     if key in param_dict:
         param_dict[key] *= arcsec
 
-for key in ["inc", "PA"]:
+for key in ["sigmaphi_arc1", "sigmaphi_arc2", "sigmaphi_arc3", "sigmaphi_arc4", "sigmaphi_arc5", "sigmaphi_arc6",
+            "inc", "PA"]:
     if key in param_dict:
         param_dict[key] *= deg
 
-for key in ["f0", "f1", "f2", "f3", "f4", "f5", "f6"]:
+for key in ["phi_arc1", "phi_arc2", "phi_arc3", "phi_arc4", "phi_arc5", "phi_arc6"]:
     if key in param_dict:
-        param_dict[key] = 10.0**param_dict[key]
+        param_dict[key] = (90+param_dict[key]) * deg
 
-Rmin *= arcsec
-dR *= arcsec
+for key in ["f0", "f1", "f2", "f3", "f4", "f5", "f6",
+            "f_arc1", "f_arc2", "f_arc3", "f_arc4", "f_arc5", "f_arc6"]:
+    if key in param_dict:
+        param_dict[key] = 10.0**param_dict[key] * dxy**2
 
-# Extract the necessary parameters for chi2Profile
+# Extract the necessary parameters for chi2Image
 inc = param_dict["inc"]
 PA = param_dict["PA"]
 dRA = param_dict["dRA"]
 dDec = param_dict["dDec"]
-funtion_param_dict = {key: val for key, val in param_dict.items() if key not in ["inc", "PA", "dRA", "dDec", "Rmin", "dR", "nR"]}
+funtion_param_dict = {key: val for key, val in param_dict.items() if key not in ["inc", "PA", "dRA", "dDec"]}
+funtion_param_dict["inc_rad"] = inc
 
-# compute the model brightness profile
-f = model_function(**funtion_param_dict, Rmin=Rmin, dR=dR, nR=nR)
+# Compute the model brightness profile
+f = model_function(x,y,**funtion_param_dict)
+
+
+# Plot the image
+fig= plt.figure(figsize=(7,5.9))
+ax =fig.add_subplot(111)
+
+rotate_img = ndimage.rotate(f, -PA/deg, reshape=False)
+plt.imshow(rotate_img, cmap = 'inferno', extent=[nxy/2*dxy/arcsec, -nxy/2*dxy/arcsec, -nxy/2*dxy/arcsec, nxy/2*dxy/arcsec],origin='lower')
+
+cbar = plt.colorbar(pad=0.02)
+cbar.outline.set_linewidth(2)
+cbar.ax.tick_params(which='major', labelsize=14,width=2.5, length=6,direction='in')
+cbar.ax.tick_params(which='minor', labelsize=14,width=1.5, length=4,direction='in')
+cbar.set_label('Intensity [Jy/pixel]', fontsize = 17, labelpad=26)
+cbar.ax.minorticks_on()
+
+lim = 1.2
+ax.set_xlim(lim,-lim)
+ax.set_ylim(-lim,lim)
+
+index_ticks = 0.5
+ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
+ax.xaxis.set_minor_locator(MultipleLocator(index_ticks/5))
+ax.yaxis.set_major_locator(MultipleLocator(index_ticks))
+ax.yaxis.set_minor_locator(MultipleLocator(index_ticks/5)) 
+ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=5,width=2.5, length=6,direction='in',color='w')
+ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=5,width=1.5, length=4,direction='in',color='w')
+ax.set_xlabel('RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+ax.set_ylabel('Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+
+for side in ax.spines.keys():  # 'top', 'bottom', 'left', 'right'
+    ax.spines[side].set_linewidth(1)
+    
+plt.savefig(f'Model_Image2D_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')  
+
+
+
+#######################
+#####   UV-PLOT   #####
+#######################
 
 # compute the visibilities of the bestfit model
-vis_mod = sampleProfile(f, Rmin, dR, nxy, dxy, u, v,
-                                 inc=inc, PA=PA, dRA=dRA, dDec=dDec)
+vis_mod = sampleImage(f, dxy, u, v, PA=PA, dRA=dRA, dDec=dDec, origin='lower')
 
 uvbin_size = 20e3     # uv-distance bin, units: wle
 
@@ -293,7 +220,7 @@ axes[0].tick_params(which='both',right=True,top=True, width=3, length=6,labelsiz
 axes[1].tick_params(which='both',right=True,top=True, width=3, length=6,labelsize=14, direction='in',pad=5)
 
 #plt.show()
-plt.savefig(f'Radialprofile_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
+plt.savefig(f'Radialprofile_galario_2D_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
 
 
 

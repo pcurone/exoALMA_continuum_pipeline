@@ -1,6 +1,5 @@
 ##########################################################################
 import numpy as np
-from numba import njit
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -11,10 +10,9 @@ from scipy import ndimage
 import os
 import time
 
-from emcee import EnsembleSampler
+from emcee import EnsembleSampler, autocorr
+from emcee.backends import HDFBackend
 import corner
-import pickle
-from scipy import signal
 
 # Convert from arcsec and deg to radians
 from galario import arcsec, deg
@@ -22,20 +20,74 @@ from galario.double import chi2Image, sampleImage, get_image_size
 from uvplot import COLUMNS_V0
 
 from uvplot import UVTable
+from galario_2D_model_functions import model_registry
 ##########################################################################
 
+##################### MODIFY HERE #####################
 target = 'CQ_Tau'
+
+uvtable_filename = f'../data/{target}_galario_uvtable.txt'
+
+# Select model
+selected_model = "2rings_2arcs"
+
+nwalkers = 41
+nsteps = 2
+
+# priors
+# fi(log10[Jy/sr]), ri(arcsec), sigmai(arcsec),
+# f_arci(log10[Jy/sr]), r_arci (arcsec), sigmar_arci(arcsec), phi_arci(deg), sigmaphi_arci(deg),
+# inc(deg), PA(deg), dRA(arcsec), dDec(arcsec)
+p_ranges = [[1., 20.],
+            [0., 1.0], 
+            [0., 1.0], 
+
+            [1., 20.],
+            [0., 1.0], 
+            [0., 1.0], 
+
+            [1., 20.],
+            [0., 1.0], 
+            [0., 1.0],
+            [0., 360],
+            [0., 360],   
+
+            [1., 20.],
+            [0., 1.0], 
+            [0., 1.0],
+            [0., 360],
+            [0., 360],   
+
+            [0., 90.],
+            [0., 180.],
+            [-2, 2], 
+            [-2, 2]]
+
+uniform_pos = False
+
+if uniform_pos:
+    # Initialize the walkers in a uniform interval for a broader exploration of the parameter space
+    unif_pos = []
+    for i in range(nwalkers):
+        # Use a list comprehension to generate the initial positions automatically from p_ranges
+        walker_position = [np.random.uniform(low=low, high=high) for low, high in p_ranges]
+        unif_pos.append(np.array(walker_position))
+else:
+    p0 = [10.334, 0.366, 0.0418,     9.856, 0.387, 0.1332,   10.722, 0.2522, 0.0628, 0.002, 90.2,     10.7518, 0.247, 0.0586, 165.86, 39.21,    35.24, 53.87, -0.00871, 0.00099] 
+
+
 
 ##################################
 #####   IMPORT THE UVTABLE   #####
 ##################################
 
+# Start the timer
+start_time = time.time()
+
 print('Importing uvtable')
-uvtable_filename = target+'_galario_uvtable.txt'
-u, v, Re, Im, w = np.require(np.loadtxt(uvtable_filename, unpack=True), requirements='C')
-wle = 0.0009042042814161718  # in meters, read from the second line in the uvtable.txt
-u /= wle
-v /= wle
+wle = np.loadtxt(uvtable_filename, skiprows=2, max_rows=1)
+u, v, Re, Im, w = np.require(np.loadtxt(uvtable_filename, skiprows=4, unpack=True), requirements='C')
+
 
 ########################################
 #####   DETERMINE THE IMAGE SIZE   #####
@@ -48,48 +100,6 @@ nxy, dxy = get_image_size(u, v, verbose=True, f_min=5., f_max=2.5)
 xarr = np.linspace(-nxy/2*dxy, nxy/2*dxy, nxy)
 yarr = np.linspace(-nxy/2*dxy, nxy/2*dxy, nxy)
 x,y = np.meshgrid(xarr, yarr)
-
-#############################################
-#####   DEFINE THE 2D MODEL FUNCTIONS   #####
-#############################################
-
-# define a Gaussian ring in 2D on the image array (with numba to make it faster)
-@njit(fastmath=True, parallel=True)
-def ring_2D(I0,R0,width,inc_rad):
-    r = ((x/np.cos(inc_rad))**2.+(y)**2.)**0.5 
-    imagemap = I0 * np.exp(-((r-R0)**2.)/(2.*(width)**2.))
-    return imagemap
-
-
-# Define a 2D 'Gaussian' arc on the image array (with numba to make it faster)
-'''
-2D arc defined as a Gaussian 2D ring with an exponential cutoff on the azimuthal coordinate
-
-theta0 = angle in deg of the central point of the arc
-defined with same convention of the PA, 0=up, 90=left, 180=down, 270=right
-
-theta_width = angle in deg of the azimuthal extension of the arc,
-or better, angle after which there is the exponential cutoff
-'''
-@njit(fastmath=True, parallel=True)
-def arc_2D(I0,R0,R_width, theta0_rad, theta_width_rad,inc_rad):
-    r = ((x/np.cos(inc_rad))**2.+(y)**2.)**0.5 
-    theta = np.arctan2(y,x/np.cos(inc_rad)) - theta0_rad
-    for j in range(nxy):
-        for k in range(nxy):
-            if theta[j,k] >  np.pi:
-                theta[j,k] = 2*np.pi - theta[j,k]
-            if theta[j,k] <  -np.pi:
-                theta[j,k] = -2*np.pi - theta[j,k]
-    imagemap = I0 * np.exp(-((r-R0)**2.)/(2.*(R_width)**2.)) * np.exp(-(theta)**2./(2.*theta_width_rad**2.)) 
-    return imagemap
-
-
-# define the image model as sum of two rings and two arcs (with numba to make it faster)
-@njit(fastmath=True, parallel=True)
-def Image2D_2rings_2arcs(f1,r1,sigma1,   f2,r2,sigma2,   f_arc1,r_arc1,sigmar_arc1,th_arc1,sigmath_arc1,  f_arc2,r_arc2,sigmar_arc2,th_arc2,sigmath_arc2,   inc_rad):
-    model_image = ring_2D(f1,r1,sigma1,inc_rad) + ring_2D(f2,r2,sigma2,inc_rad) + arc_2D(f_arc1,r_arc1,sigmar_arc1, th_arc1, sigmath_arc1,inc_rad) + arc_2D(f_arc2,r_arc2,sigmar_arc2, th_arc2, sigmath_arc2,inc_rad) 
-    return model_image
 
 
 #####################################################
@@ -116,41 +126,49 @@ def lnpostfn_2D(p, p_ranges, dxy, u, v, Re, Im, w):
 
     lnprior = lnpriorfn(p, p_ranges)  # apply prior
     if not np.isfinite(lnprior):
-        return -np.inf
-
-    # unpack the parameters
-    f1,r1,sigma1,   f2,r2,sigma2,   f_arc1,r_arc1,sigmar_arc1,th_arc1,sigmath_arc1,  f_arc2,r_arc2,sigmar_arc2,th_arc2,sigmath_arc2,   inc, PA, dRA, dDec = p
+        return -np.inf 
     
-    f1 = (10.0**f1) * dxy**2        # convert from log10[Jy/sr] to Jy/pixel
-    f2 = (10.0**f2) * dxy**2
-    f_arc1 = (10.**f_arc1) * dxy**2
-    f_arc2 = (10.**f_arc2) * dxy**2
+    # Unpack the parameters dynamically
+    param_dict = {key: val for key, val in zip(params, p)}
+
+    # Convert specific parameters to required units
+    for key in ["sigma0", "sigma1", "sigma2", "sigma3", "sigma4", "sigma5", "sigma6", 
+                "r1", "r2", "r3", "r4", "r5", "r6", 
+                "r_arc1", "r_arc2", "r_arc3", "r_arc4", "r_arc5", "r_arc6",
+                "sigmar_arc1", "sigmar_arc2", "sigmar_arc3", "sigmar_arc4", "sigmar_arc5", "sigmar_arc6", 
+                "dRA", "dDec"]:
+        if key in param_dict:
+            param_dict[key] *= arcsec
     
-    # convert to radians
-    r1 *= arcsec
-    r2 *= arcsec
-    r_arc1 *= arcsec
-    r_arc2 *= arcsec
-    sigma1 *= arcsec
-    sigma2 *= arcsec
-    sigmar_arc1 *= arcsec
-    sigmar_arc2 *= arcsec
+    for key in ["sigmaphi_arc1", "sigmaphi_arc2", "sigmaphi_arc3", "sigmaphi_arc4", "sigmaphi_arc5", "sigmaphi_arc6",
+                "inc", "PA"]:
+        if key in param_dict:
+            param_dict[key] *= deg
 
-    th_arc1 = (90+th_arc1) * deg
-    th_arc2 = (90+th_arc2) * deg
-    sigmath_arc1 *= deg
-    sigmath_arc2 *= deg
+    for key in ["phi_arc1", "phi_arc2", "phi_arc3", "phi_arc4", "phi_arc5", "phi_arc6"]:
+        if key in param_dict:
+            param_dict[key] = (90+param_dict[key]) * deg
+    
+    for key in ["f0", "f1", "f2", "f3", "f4", "f5", "f6",
+                "f_arc1", "f_arc2", "f_arc3", "f_arc4", "f_arc5", "f_arc6"]:
+        if key in param_dict:
+            param_dict[key] = 10.0**param_dict[key] * dxy**2
 
-    inc *= deg
-    PA *= deg
-    dRA *= arcsec
-    dDec *= arcsec
-
-    # compute the model brightness profile
-    f = Image2D_2rings_2arcs(f1,r1,sigma1,   f2,r2,sigma2,   f_arc1,r_arc1,sigmar_arc1,th_arc1,sigmath_arc1,  f_arc2,r_arc2,sigmar_arc2,th_arc2,sigmath_arc2,   inc)
-
+    # Extract the necessary parameters for chi2Image
+    inc = param_dict["inc"]
+    PA = param_dict["PA"]
+    dRA = param_dict["dRA"]
+    dDec = param_dict["dDec"]
+    funtion_param_dict = {key: val for key, val in param_dict.items() if key not in ["inc", "PA", "dRA", "dDec"]}
+    funtion_param_dict["inc_rad"] = inc
+    
+    # Compute the model brightness profile
+    f = model_function(x,y,**funtion_param_dict)
+    # Compute chi2
     chi2_2D = chi2Image(f, dxy, u, v, Re, Im, w,
                      PA=PA, dRA=dRA, dDec=dDec, origin='lower')
+    
+    #print(np.min(f),np.max(f),np.isnan(f.any()),chi2)
 
     return -0.5 * chi2_2D + lnprior
 
@@ -159,50 +177,50 @@ def lnpostfn_2D(p, p_ranges, dxy, u, v, Re, Im, w):
 #####   SETUP THE MCMC    #####
 ###############################
 
+model_info = model_registry[selected_model]
+model_function = model_info["function"]
+base_parameters = model_info["parameters"]
+param_labels = model_info["labels"]
 
-# initial guess for the parameters
-# f1(log10[Jy/sr]), r1(arcsec), sigma1(arcsec),
-# f2(log10[Jy/sr]), r2(arcsec), sigma2(arcsec),
-# f_arc1(log10[Jy/sr]), r_arc1 (arcsec), sigmar_arc1(arcsec), th_arc1(deg), sigmath_arc1(deg),
-# f_arc2(log10[Jy/sr]), r_arc2 (arcsec), sigmar_arc2(arcsec), th_arc2(deg), sigmath_arc2(deg),
-# inc(deg), PA(deg), dRA(arcsec), dDec(arcsec)
-p0 = [10.56145, 0.27995, 0.07830,       8.61961, 0.33500, 0.45362,   10.25177, 0.3161, 0.11886, 11.13848, 79.64386,     10.35668, 0.26143, 0.11739, 167.15034, 33.77274,    32.91998, 55.15362, 0.01544, 0.00246] #  
-# parameter space domain
-p_ranges = [[1., 20.],
-            [0., 1.0], 
-            [0., 1.0], 
+params = [param for param in base_parameters]
+params.extend(["inc", "PA", "dRA", "dDec"])
+ndim = len(params)
 
-            [1., 20.],
-            [0., 1.0], 
-            [0., 1.0], 
 
-            [1., 20.],
-            [0., 1.0], 
-            [0., 1.0],
-            [0., 360],
-            [0., 360],   
+# Backend setup and initialization
+backend_filename = f"{target}_galario_2D_emcee_backend_{selected_model}_{nwalkers}walkers.h5"
 
-            [1., 20.],
-            [0., 1.0], 
-            [0., 1.0],
-            [0., 360],
-            [0., 360],   
+if os.path.exists(backend_filename):
+    print(f"Using existing backend file: {backend_filename}")
+    backend = HDFBackend(backend_filename)
+    print(f"Backend has {backend.iteration} iterations")
 
-            [0., 90.],
-            [0., 180.],
-            [-2, 2], 
-            [-2, 2]]
+    # Retrieve the last positions if samples exist
+    if backend.iteration > 0:
+        pos = backend.get_last_sample().coords
+    elif uniform_pos:
+        print('Drawing the initial positions of the walkers from a uniform distribution over the intervals set by the priors')
+        pos = unif_pos
+    else:
+        print('Manually choosing the initial positions of the walkers')
+        print(f'p0 = {p0}')
+        pos = [p0 + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
+else:
+    print(f"Creating a new backend file: {backend_filename}")
+    backend = HDFBackend(backend_filename)
+    backend.reset(nwalkers, ndim)
+    if uniform_pos:
+        print('Drawing the initial positions of the walkers from a uniform distribution over the intervals set by the priors')
+        pos = unif_pos
+    else:
+        print('Manually choosing the initial positions of the walkers')
+        print(f'p0 = {p0}')
+        pos = [p0 + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]     # initialize the walkers with an ndim-dimensional Gaussian ball
 
-ndim = len(p_ranges)
+sampler = EnsembleSampler(nwalkers, ndim, lnpostfn_2D, 
+                          args=[p_ranges, dxy, u, v, Re, Im, w],
+                          backend=backend)
 
-nthreads = 30
-nwalkers = 40
-nsteps = 2510
-
-# initialize the walkers with an ndim-dimensional Gaussian ball
-pos = [p0 + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
-
-sampler = EnsembleSampler(nwalkers, ndim, lnpostfn_2D, args=[p_ranges, dxy, u, v, Re, Im, w], threads=nthreads)
 
 #############################
 #####   RUN THE MCMC    #####
@@ -212,40 +230,35 @@ sampler = EnsembleSampler(nwalkers, ndim, lnpostfn_2D, args=[p_ranges, dxy, u, v
 print('Walking...')
 pos, prob, state = sampler.run_mcmc(pos, nsteps, progress=True)
 
+####################################
+#####   READ RESULTING CHAIN   #####
+####################################
 
-################################
-#####   SAVE THE RESULTS   #####
-################################
+flat_chain = backend.get_chain(flat=True)
+niters = 1000
 
-samples = sampler.chain[:, -1000:, :].reshape((-1, ndim))
+# Extract the last nsamples samples
+if len(flat_chain) >= niters*nwalkers:
+    print(f"Selecting only walker's positions in the last {niters} iterations")
+    samples = flat_chain[-niters*nwalkers:]
+else:
+    print(F"Warning: The chain contains fewer iterations than the selected niters ({niters}).")
+    samples = flat_chain  # Use all available samples
 
-results_galario_fullrun = {'emcee_sampler_samples' : samples,
-                           'model_p_ranges' : p_ranges,
-                           'model_p0' : p0,
-                           'model_nwalkers' : nwalkers,
-                           'model_nsteps' : nsteps,
-                           'uvdata_u' : u,
-                           'uvdata_v' : v,
-                           'uvdata_Re' : Re,
-                           'uvdata_Im' : Im,
-                           'uvdata_w' : w,
-                           'wavelength' : wle
-                            }
-
-
-pickle.dump(results_galario_fullrun, open('galario_fullrun_Image2D_2rings_2arcs_'+str(int(nwalkers))+'walker_'+str(int(nsteps))+'steps.pkl', 'wb'))
-
+# Print or analyze the last nsamples samples
+#print("Shape of last nsamples  samples:", samples.shape)
 
 ###########################
 #####   CORNER PLOT   #####
 ###########################
 
-fig = corner.corner(samples, labels=["$f_1$",  r"$r_1$", r"$\sigma_1$",       "$f_2$",  r"$r_2$", r"$\sigma_2$",         "$f_{\mathrm{Arc}1}$",  r"$r_{\mathrm{Arc}1}$", r"$\sigma_{\mathrm{Arc}1}$", r"$\theta_{\mathrm{Arc}1}$", r"$\sigma_{\theta\mathrm{Arc}1}$",     "$f_{\mathrm{Arc}2}$",  r"$r_{\mathrm{Arc}2}$", r"$\sigma_{\mathrm{Arc}2}$", r"$\theta_{\mathrm{Arc}2}$", r"$\sigma_{\theta\mathrm{Arc}2}$",     "inc", "PA", r"$\Delta RA$", r"$\Delta Dec$"],
+fig = corner.corner(samples, labels=param_labels,
                     show_titles=True, quantiles=[0.16, 0.50, 0.84],
                     label_kwargs={'labelpad':20, 'fontsize':15}, fontsize=8, title_fmt = '.5f')
 
 #plt.show()
-plt.savefig('Cornerplot_galario_Image2D_2rings_2arcs_'+str(int(nwalkers))+'walker_'+str(int(nsteps))+'steps.pdf', bbox_inches='tight')
+plt.savefig(f'Cornerplot_galario_2D_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
+
 
 
 #####################################
@@ -254,35 +267,41 @@ plt.savefig('Cornerplot_galario_Image2D_2rings_2arcs_'+str(int(nwalkers))+'walke
 
 bestfit = [np.percentile(samples[:, i], 50) for i in range(ndim)]
 
-f1,r1,sigma1,   f2,r2,sigma2,   f_arc1,r_arc1,sigmar_arc1,th_arc1,sigmath_arc1,  f_arc2,r_arc2,sigmar_arc2,th_arc2,sigmath_arc2,   inc, PA, dRA, dDec = bestfit
+param_dict = {key: val for key, val in zip(params, bestfit)}
 
-f1 = (10.0**f1) * dxy**2        # convert from log10[Jy/sr] to Jy/pixel
-f2 = (10.0**f2) * dxy**2
-f_arc1 = (10.**f_arc1) * dxy**2
-f_arc2 = (10.**f_arc2) * dxy**2
+# Convert specific parameters to required units
+for key in ["sigma0", "sigma1", "sigma2", "sigma3", "sigma4", "sigma5", "sigma6", 
+            "r1", "r2", "r3", "r4", "r5", "r6", 
+            "r_arc1", "r_arc2", "r_arc3", "r_arc4", "r_arc5", "r_arc6",
+            "sigmar_arc1", "sigmar_arc2", "sigmar_arc3", "sigmar_arc4", "sigmar_arc5", "sigmar_arc6", 
+            "dRA", "dDec"]:
+    if key in param_dict:
+        param_dict[key] *= arcsec
 
-# convert to radians
-r1 *= arcsec
-r2 *= arcsec
-r_arc1 *= arcsec
-r_arc2 *= arcsec
-sigma1 *= arcsec
-sigma2 *= arcsec
-sigmar_arc1 *= arcsec
-sigmar_arc2 *= arcsec
+for key in ["sigmaphi_arc1", "sigmaphi_arc2", "sigmaphi_arc3", "sigmaphi_arc4", "sigmaphi_arc5", "sigmaphi_arc6",
+            "inc", "PA"]:
+    if key in param_dict:
+        param_dict[key] *= deg
 
-th_arc1 = (90+th_arc1) * deg
-th_arc2 = (90+th_arc2) * deg
-sigmath_arc1 *= deg
-sigmath_arc2 *= deg
+for key in ["phi_arc1", "phi_arc2", "phi_arc3", "phi_arc4", "phi_arc5", "phi_arc6"]:
+    if key in param_dict:
+        param_dict[key] = (90+param_dict[key]) * deg
 
-inc *= deg
-PA *= deg
-dRA *= arcsec
-dDec *= arcsec
+for key in ["f0", "f1", "f2", "f3", "f4", "f5", "f6",
+            "f_arc1", "f_arc2", "f_arc3", "f_arc4", "f_arc5", "f_arc6"]:
+    if key in param_dict:
+        param_dict[key] = 10.0**param_dict[key] * dxy**2
 
-# compute the model brightness image
-f = Image2D_2rings_2arcs(f1,r1,sigma1,   f2,r2,sigma2,   f_arc1,r_arc1,sigmar_arc1,th_arc1,sigmath_arc1,  f_arc2,r_arc2,sigmar_arc2,th_arc2,sigmath_arc2,   inc)
+# Extract the necessary parameters for chi2Image
+inc = param_dict["inc"]
+PA = param_dict["PA"]
+dRA = param_dict["dRA"]
+dDec = param_dict["dDec"]
+funtion_param_dict = {key: val for key, val in param_dict.items() if key not in ["inc", "PA", "dRA", "dDec"]}
+funtion_param_dict["inc_rad"] = inc
+
+# Compute the model brightness profile
+f = model_function(x,y,**funtion_param_dict)
 
 
 # Plot the image
@@ -305,9 +324,9 @@ ax.set_ylim(-lim,lim)
 
 index_ticks = 0.5
 ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
-ax.xaxis.set_minor_locator(MultipleLocator(index_ticks/4))
+ax.xaxis.set_minor_locator(MultipleLocator(index_ticks/5))
 ax.yaxis.set_major_locator(MultipleLocator(index_ticks))
-ax.yaxis.set_minor_locator(MultipleLocator(index_ticks/4)) 
+ax.yaxis.set_minor_locator(MultipleLocator(index_ticks/5)) 
 ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=5,width=2.5, length=6,direction='in',color='w')
 ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=5,width=1.5, length=4,direction='in',color='w')
 ax.set_xlabel('RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
@@ -316,7 +335,8 @@ ax.set_ylabel('Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 for side in ax.spines.keys():  # 'top', 'bottom', 'left', 'right'
     ax.spines[side].set_linewidth(1)
     
-plt.savefig('Model_Image2D_2rings_2arcs_'+str(int(nwalkers))+'walker_'+str(int(nsteps))+'steps.pdf', bbox_inches='tight')  
+plt.savefig(f'Model_Image2D_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')  
+
 
 
 #######################
@@ -354,7 +374,7 @@ axes[0].tick_params(which='both',right=True,top=True, width=3, length=6,labelsiz
 axes[1].tick_params(which='both',right=True,top=True, width=3, length=6,labelsize=14, direction='in',pad=5)
 
 #plt.show()
-plt.savefig('Radialprofile_galario_Image2D_2rings_2arcs_'+str(int(nwalkers))+'walker_'+str(int(nsteps))+'steps.pdf', bbox_inches='tight')           
+plt.savefig(f'Radialprofile_galario_2D_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
 
 
 
@@ -363,22 +383,37 @@ plt.savefig('Radialprofile_galario_Image2D_2rings_2arcs_'+str(int(nwalkers))+'wa
 ##################################
 
 fig, axes = plt.subplots(ndim, figsize=(12, 20), sharex=True)
-labels=["$f_1$",  r"$r_1$", r"$\sigma_1$",       "$f_2$",  r"$r_2$", r"$\sigma_2$",         "$f_{\mathrm{Arc}1}$",  r"$r_{\mathrm{Arc}1}$", r"$\sigma_{\mathrm{Arc}1}$", r"$\theta_{\mathrm{Arc}1}$", r"$\sigma_{\theta\mathrm{Arc}1}$",     "$f_{\mathrm{Arc}2}$",  r"$r_{\mathrm{Arc}2}$", r"$\sigma_{\mathrm{Arc}2}$", r"$\theta_{\mathrm{Arc}2}$", r"$\sigma_{\theta\mathrm{Arc}2}$",     "inc", "PA", r"$\Delta RA$", r"$\Delta Dec$"]
-samples_tot = sampler.get_chain()
+labels=param_labels
+nonflat_chain = backend.get_chain()
 for i in range(ndim):
     ax = axes[i]
-    ax.plot(samples_tot[:, :, i], "k", alpha=0.3)
-    ax.set_xlim(0, len(samples_tot))
+    ax.plot(nonflat_chain[:, :, i], "k", alpha=0.3)
+    ax.set_xlim(0, len(nonflat_chain))
     ax.set_ylabel(labels[i])
     ax.yaxis.set_label_coords(-0.1, 0.5)
 
 axes[-1].set_xlabel("step number")
-plt.savefig('Walkers_path_galario_Image2D_2rings_2arcs_'+str(int(nwalkers))+'walker_'+str(int(nsteps))+'steps.pdf', bbox_inches='tight')           
+plt.savefig(f'Walkers_path_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
+
+# Calculate autocorrelation time and check chain length
+try:
+    tau = autocorr.integrated_time(nonflat_chain, tol=0)
+    print(f"Autocorrelation time for each parameter: {tau}")
+    print(f"Mean autocorrelation time: {np.mean(tau)}")
+
+    # Check if the chain is sufficiently long
+    nsteps = nonflat_chain.shape[0]  # Number of steps in the chain
+    if nsteps < 50 * np.max(tau):
+        print("Warning: Chain is too short for reliable results. "
+              f"Chain length is {nsteps}, but should be at least {50 * np.max(tau):.0f} "
+              "to reliably estimate autocorrelation time.")
+except Exception as e:
+    print(f"Error calculating autocorrelation time: {e}")
 
 
-# Check auto-correlation time
-tau = sampler.get_autocorr_time()
+# End the timer
+end_time = time.time()
+elapsed_time = (end_time - start_time) / 60  # Convert seconds to minutes
 
-f = open('autocorr_time.txt', 'w')
-f.write(f'Autocorrelation time estimated with sampler.get_autocorr_time()\n{tau}')
-f.close()
+# Print runtime and number of walkers
+print(f"Run completed in {elapsed_time:.2f} minutes with {nwalkers} walkers.")

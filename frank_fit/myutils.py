@@ -11,7 +11,6 @@ def Jybeam_to_Jysr(data,bmin,bmaj):
     beam_area = np.pi * omega / 4. / np.log(2.)
     return data / beam_area
 
-
 def Jysr_to_Tb(data, nu):
     # [Jy/sr] to [K] conversion using the full Planck law.
     Tb = sc.h * nu / (sc.k * np.log(1+(2 * sc.h * nu**3) / (1e-26*data * sc.c**2)))
@@ -23,7 +22,6 @@ def Jysr_to_Tb_err(data, err_data, nu):
     dTb =  (2 * sc.h**2 * nu**4) / (sc.k * (1e-26*data) * ((1e-26*data) * sc.c**2 + 2 * sc.h * nu**3) * (np.log(1 + (2 * sc.h * nu**3)/((1e-26*data) * sc.c**2)))**2) * (1e-26*err_data)
     # For some reason it gives inf if not using the parenthesis around 1e-26*data 
     return Tb, dTb    
-
 
 def Jysr_to_Tb_RJ(data, nu):
     # [Jy/sr] to [K] conversion using the Rayleigh-Jeans approximation.
