@@ -2,6 +2,7 @@ This pipeline is inspired by the procedure used in [Andrews et al. 2021](https:/
 
 It has been expanded for the continuum analysis of the exoALMA sources (_exoALMA IV, Curone et al._), including galario fits for determining geometrical parameters.
 
+
 In addition to standard Python packages, you’ll need the following tools installed:
 - [CASA](https://casa.nrao.edu/casa_obtaining.shtml).
 - For galario:
@@ -27,6 +28,7 @@ This pipeline currently supports ALMA data only (VLA data is not compatible due 
    This script:
    1. Produces `AA_Tau_continuum.ms` with continuum spws averaged to 1 channel and 30s bins in time.
    2. Generates uv tables for frank and galario (`AA_Tau_continuum.vis.npz` for frank and `AA_Tau_galario_uvtable.txt` for galario)
+
 
 # galario 
 
