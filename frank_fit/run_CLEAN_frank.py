@@ -38,21 +38,6 @@ img_lim = 1.3     # multiple of rout, used to set the limit of the images and th
 index_ticks = 0.5     # arcsec, spacing of the major ticks in figures
 
 
-# residuals color map
-c2 = plt.cm.Reds(np.linspace(0, 1, 32))
-c1 = plt.cm.Blues_r(np.linspace(0, 1, 32))
-c1 = np.vstack([c1, np.ones((32, 4))])
-colors = np.vstack((c1, c2))
-mymap = mcolors.LinearSegmentedColormap.from_list('eddymap', colors)
-
-###########################  
-
-
-# crude passing mechanism
-f = open('whichdisk.txt', 'w')
-f.write(target)
-f.close()
-
 
 ###############################
 ##### CLEAN THE DATA
@@ -62,6 +47,7 @@ if im_dat:
     print('....')
     print('Imaging the data')
     print('....')
+    os.environ['TARGET'] = target
     os.system('casa --nogui --nologger --nologfile -c data_imaging.py')
     print('....')
     print('Finished imaging the data')
@@ -74,7 +60,7 @@ if im_dat:
 ##########################
 
 # load data
-dhdu = fits.open('data/'+target+'_data.fits')
+dhdu = fits.open('CLEAN/'+target+'_data.fits')
 dimg, hd = np.squeeze(dhdu[0].data), dhdu[0].header
 
 # parse coordinate frame indices into physical numbers
@@ -164,7 +150,7 @@ if frank:
     print('....')
 
     # load the visibility data
-    dat = np.load('data/'+target+'_continuum.vis.npz')
+    dat = np.load('../data/'+target+'_continuum.vis.npz')
     u, v, vis, wgt = dat['u'], dat['v'], dat['Vis'], dat['Wgt']
 
     # set the disk viewing geometry
@@ -183,13 +169,7 @@ if frank:
     # fit the visibilities
     sol = FF.fit(u, v, vis, wgt)
 
-    # save useful plot of the fit
-    priors = {'alpha': disk.disk[target]['hyp-alpha'],
-              'wsmooth': disk.disk[target]['hyp-wsmth'],
-              'Rmax': disk.disk[target]['Rmax']*disk.disk[target]['rout'],
-              'N': disk.disk[target]['hyp-Ncoll'],
-              'p0': disk.disk[target]['hyp-p0']}
-    make_full_fig(u, v, vis, wgt, sol, bin_widths=[1e4, 5e4], priors=priors, save_prefix='fits/'+target)
+    make_full_fig(u, v, vis, wgt, sol, bin_widths=[1e4, 5e4], save_prefix='fits/'+target)
 
     # save the fit
     save_fit(u, v, vis, wgt, sol, prefix='fits/'+target)
@@ -208,6 +188,7 @@ if im_res:
     print('....')
     print('Imaging residuals')
     print('....')
+    os.environ['TARGET'] = target
     os.system('casa --nogui --nologger --nologfile -c resid_imaging.py')
     print('....')
     print('Finished imaging residuals')
@@ -220,18 +201,25 @@ if im_res:
 ##### PLOT THE +/- RESIDUALS
 ###############################
 
-if os.path.exists('data/'+target+'_resid.fits'):
+# residuals color map
+c2 = plt.cm.Reds(np.linspace(0, 1, 32))
+c1 = plt.cm.Blues_r(np.linspace(0, 1, 32))
+c1 = np.vstack([c1, np.ones((32, 4))])
+colors = np.vstack((c1, c2))
+mymap = mcolors.LinearSegmentedColormap.from_list('eddymap', colors)
+
+if os.path.exists('CLEAN/'+target+'_resid.fits'):
     print('....')
     print('Making residual +/- plot')
     print('using file created on: %s' % \
-          time.ctime(os.path.getctime('data/'+target+'_resid.fits')))
+          time.ctime(os.path.getctime('CLEAN/'+target+'_resid.fits')))
     print('....')
 
     # load residual image
-    rhdu = fits.open('data/'+target+'_resid.fits')
+    rhdu = fits.open('CLEAN/'+target+'_resid.fits')
     rimg = np.squeeze(rhdu[0].data)
 
-    dhdu = fits.open('data/'+target+'_data.fits')
+    dhdu = fits.open('CLEAN/'+target+'_data.fits')
     hd = dhdu[0].header
 
     # parse coordinate frame indices into physical numbers
@@ -433,7 +421,7 @@ Tb_frank_RJ = Jysr_to_Tb_RJ(Inu_frank, freq)
 Tb_frank_convolved_RJ = Jysr_to_Tb_RJ(Inu_frank_convolved, freq)
 
 # Obtain the CLEAN profile using the imagecube function from gofish
-cube = imagecube('data/'+target+'_data.fits', FOV=5.)
+cube = imagecube('CLEAN/'+target+'_data.fits', FOV=5.)
 r_clean, I_clean, dI_clean = cube.radial_profile(x0=disk.disk[target]['dx'], y0=disk.disk[target]['dy'], inc=disk.disk[target]['incl'], PA=disk.disk[target]['PA'], dr=1/50)
 # convert to brightness temperatures (full Planck law)
 Tb_clean, dTb_clean = Jysr_to_Tb_err(Jybeam_to_Jysr(I_clean, bmin, bmaj), Jybeam_to_Jysr(dI_clean, bmin, bmaj), freq)
@@ -511,6 +499,7 @@ if im_mdl:
     print('....')
     print('Imaging model')
     print('....')
+    os.environ['TARGET'] = target
     os.system('casa --nogui --nologerr --nologfile -c model_imaging.py') 
     print('....')
     print('Finished imaging model')
@@ -524,7 +513,7 @@ if im_mdl:
 ######################################
 
 # load model
-dhdu = fits.open('data/'+target+'_model.fits')
+dhdu = fits.open('CLEAN/'+target+'_model.fits')
 dimg, hd = np.squeeze(dhdu[0].data), dhdu[0].header
 
 # parse coordinate frame indices into physical numbers

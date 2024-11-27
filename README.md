@@ -1,68 +1,84 @@
-Pipeline to perform frank fits initially inspired by the procedure used by Sean Andrews in Andrews et al. 2021. 
+This pipeline is inspired by the procedure used in [Andrews et al. 2021](https://ui.adsabs.harvard.edu/abs/2021ApJ...916...51A/abstract) ([GitHub repo](https://github.com/seanandrews/DSHARP_CPDs)).
 
-Expanded for the continuum analysis of the exoALMA sources (exoALMA IV, Curone and exoALMA) including galario fits for getting the geometrical parameters.
-
-Codes required to be installed (apart from all the usual python packages):
-- CASA (https://casa.nrao.edu/casa_obtaining.shtml).
-- galario (https://mtazzari.github.io/galario/). _(Problems to install it on an Apple machine with ARM Chip, so I ended up creating an x86 environment using Rosetta 2 where I installed galario through the usual conda)_.
-- uvplot (https://github.com/mtazzari/uvplot).
-- emcee (https://emcee.readthedocs.io/en/stable/user/install/), corner (https://corner.readthedocs.io/en/latest/install/), and h5py (https://docs.h5py.org/en/latest/build.html).
-- frank (https://github.com/discsim/frank).
-- gofish (https://github.com/richteague/gofish).
+It has been expanded for the continuum analysis of the exoALMA sources (_exoALMA IV, Curone et al._), including galario fits for determining geometrical parameters.
 
 
+In addition to standard Python packages, you’ll need the following tools installed:
+- [CASA](https://casa.nrao.edu/casa_obtaining.shtml).
+- For galario:
+  - [galario](https://mtazzari.github.io/galario/). _(Note: On macOS with ARM chips, Galario installation may require creating an x86 environment using Rosetta 2 and installing via Conda)_.
+  - [uvplot](https://github.com/mtazzari/uvplot).
+  - [emcee](https://emcee.readthedocs.io/en/stable/user/install/), [corner](https://corner.readthedocs.io/en/latest/install/), and [h5py](https://docs.h5py.org/en/latest/build.html).
+- For frank:
+  - [frank](https://github.com/discsim/frank).
+  - [gofish](https://github.com/richteague/gofish).
 
-# From ms file to uv tables
 
-Works only for ALMA data, not for VLA data (due to different polarization settings)
 
-1. Create a source folder (e.g., `AA_Tau`). Within it, copy the `data`, `frank_fit` and `galario_fit` folders you find here.
-2. Download your starting continuum ms file (for instance `AA_Tau_time_ave_continuum.ms`) and place it in `data`, where you will also find `ExportMS_split_contspw_1ch.py`.
-3. In `data`, open a CASA terminal and type
+# From Measurement Set (MS) to uv tables
+
+This pipeline currently supports ALMA data only (VLA data is not compatible due to different polarization settings).
+
+1. Create a source folder (here we consider `AA_Tau`). Within it, copy the `data`, `frank_fit` and `galario_fit` folders from this repository into it.
+2. Place your starting continuum MS file (here `AA_Tau_time_ave_continuum.ms`) in the `data` folder. The `data` folder should also contain the `ExportMS_split_contspw_1ch.py` script.
+3. Open a CASA terminal in the `data` folder and execute:
    ```
    execute('ExportMS_split_contspw_1ch.py')`
    ``` 
-   to:
-   1. Produce `AA_Tau_continuum.ms` with continuum spws averaged in frequency to 1 channel and in time to 30s bins.
-   2. Generate uv tables for frank and galario (`AA_Tau_continuum.vis.npz` for frank and `AA_Tau_galario_uvtable.txt` for galario)
+   This script:
+   1. Produces `AA_Tau_continuum.ms` with continuum spws averaged to 1 channel and 30s bins in time.
+   2. Generates uv tables for frank and galario (`AA_Tau_continuum.vis.npz` for frank and `AA_Tau_galario_uvtable.txt` for galario)
 
-# galario (to be updated)
 
-Look here for the galario documentation and the 'Getting started' tutorial https://mtazzari.github.io/galario/
+# galario 
+
+Check the [galario documentation](https://mtazzari.github.io/galario/) for details (in particular the 'Getting started' tutorial).
 
 ## galario 1D 
 
-In the case of mostly axisymmetric sources, use a 1D profile as the model. Within the `galario_fit` folder:
+For mostly axisymmetric sources, use a 1D profile model. Within the `galario_fit` folder:
 
-1. Prepare the python file (here `galario_fit_AA_Tau_exoALMA_PointSource_4rings.py`). Fix the `wle` parameter and the model with the right model emission for the specific source. Fix also the `nwalkers` and `nsteps`. 
-2. Run galario:
+1. Add your parametric model to `galario_1D_model_functions.py`, if not already included.
+2. Adjust the fitting parameters in the “MODIFY HERE” section of `galario_fit_1D.py`. Here, you can choose your model, number of walkers and steps, radial grid, initial guess for the model parameters, and priors.
+3. Run the fit:
    ```
-   python galario_fit_AA_Tau_exoALMA_PointSource_4rings.py
+   python galario_fit_1D.py
    ```
-3. Experiment with multiple runs for convergence.
+4. Experiment with multiple runs for convergence.
+5. You can simply plot the results from a stored backend with:
+   ```
+   python plot_results_galario_fit_1D.py
+   ```
 
 
 ## galario 2D
 
-In the case of highly non-axisymmetric sources use a 2D model (here considering CQ Tau). Within the `galario_fit` folder:
+For highly non-axisymmetric sources (here, `CQ Tau`), use a 2D model. Within the `galario_fit` folder:
 
-1. Inspect the parameters of the 2D model using `model_galario_2D_new.ipynb`
-2. Run galario with the file `galario_2D_fit_CQ_Tau_exoALMA_2rings_2arcs_uniform_pos.py`. The initial walker positions are randomly selected using a flat probability function across a wide range of values. This approach thoroughly explores all potential values, which is particularly beneficial when dealing with numerous fitting parameters.
-3. After a first run, employ `galario_2D_fit_CQ_Tau_exoALMA_2rings_2arcs_2nd_step.py`. Here, the initial point `p0` is chosen with a small Gaussian variation based on the best-fit parameters obtained from the previous step.
-
-
+1. Add your parametric model to `galario_2D_model_functions.py`, if not already included.
+2. Optionally, you can visually check your 2D model with the `prepare_model_galario_2D.ipynb` notebook.
+3. Adjust parameters in the “MODIFY HERE” section of `galario_fit_2D.py`. Here, you can choose your model, number of walkers and steps, and priors. You can also choose whether to start from manually chosen initial positions of the walkers or draw the initial positions of the walkers from a uniform distribution over the intervals set by the priors (this approach thoroughly explores all potential values, which is particularly beneficial when dealing with numerous fitting parameters). The choice is made with the `uniform_pos` boolean variable.
+4. Run the fit:
+   ```
+   python galario_fit_2D.py
+   ```
+5. Experiment with multiple runs for convergence.
+6. You can simply plot the results from a stored backend with:
+   ```
+   python plot_results_galario_fit_2D.py
+   ```
 
 # frank
 
-You can check here the nice and detailed frank documentation https://discsim.github.io/frank/
+Refer to the [frank documentation](https://discsim.github.io/frank/) for detailed guidance. 
 
-Within the `frank_fit` folder you'll find:
+Within the `frank_fit` folder you will find:
 - `data_imaging.py` function to CLEAN the data.
 - `diskdictionary.py` file to store parameters of the disk, the CLEANing and the frank fit.
 - `model_imaging.py` function to CLEAN the frank model visibilities as if they were data, using the same uv locations of the observation.
 - `resid_imaging` function to CLEAN the residuals obtained by subtracting the frank fit from the observed data.
-- `ImportMS.py` function called by `model_imaging.py` and `resid_imaging.py` to produce the model and residuals ms tables (`data/AA_Tau_continuum.model.ms` and `data/AA_Tau_continuum.resid.ms`) from `data/AA_Tau_continuum.ms`
-- `run_CLEAN_frank.py` is the main file. It performs the frank fit, saving the results in the `fits` folder, and runs the CLEANing of the data, the frank model, and the residuals, saving the images in the `figs` folder.
+- `ImportMS.py` function called by `model_imaging.py` and `resid_imaging.py` to produce the model and residuals MS tables (`frank_fit/CLEAN/AA_Tau_continuum.model.ms` and `frank_fit/CLEAN/AA_Tau_continuum.resid.ms`) from `data/AA_Tau_continuum.ms`
+- `run_CLEAN_frank.py` is the main file. It performs the frank fit, saving the results in the `frank_fit/fits` folder, and runs the CLEANing of the data, the frank model, and the residuals, saving the images in the `frank_fit/figs` folder.
 
 How to proceed:
 1. Modify the `diskdictionary.py` file with the right values of `incl`, `PA`, `dx`, `dy` from the galario fit (or your favorite method) and all the other parameters used by frank and CLEAN.
@@ -73,7 +89,7 @@ How to proceed:
       1. `im_dat` to CLEAN the observed data.
       2. `frank`  to perform the frank fit.
       3. `im_res` to CLEAN the residuals (observed data - frank model).
-      4. `annotate_res` to annotate the residual image (saved in the `figs` folder) with the geometrical parameters that have been used.
+      4. `annotate_res` to annotate the residual image (saved in the `figs` folder) with the geometrical parameters that have been used and possible ellipses.
       5. `im_mdl` to CLEAN the frank model.
 3. Run everything with
    ```
