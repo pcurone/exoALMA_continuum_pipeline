@@ -30,7 +30,7 @@ This pipeline currently supports ALMA data only (VLA data is not compatible due 
    2. Generates uv tables for frank and galario (`AA_Tau_continuum.vis.npz` for frank and `AA_Tau_galario_uvtable.txt` for galario)
 
 
-# galario 
+# galario [(Tazzari et al. 2018)](https://ui.adsabs.harvard.edu/abs/2018MNRAS.476.4527T/abstract)
 
 Check the [galario documentation](https://mtazzari.github.io/galario/) for details (in particular the 'Getting started' tutorial).
 
@@ -68,7 +68,7 @@ For highly non-axisymmetric sources (here, `CQ Tau`), use a 2D model. Within the
    python plot_results_galario_fit_2D.py
    ```
 
-# frank
+# frank [(Jennings et al. 2020)](https://ui.adsabs.harvard.edu/abs/2020MNRAS.495.3209J/abstract)
 
 Refer to the [frank documentation](https://discsim.github.io/frank/) for detailed guidance. 
 
