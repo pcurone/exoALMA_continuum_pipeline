@@ -15,8 +15,7 @@ split(vis=MS_filename+'.ms',
       timebin='30s',
       datacolumn='data',
       outputvis=target+'_continuum.ms', 
-      keepflags=False,
-      timebin=None)
+      keepflags=False)
 
 listobs(vis=target+'_continuum.ms', listfile=target+'_continuum.ms.txt', overwrite=True) 
 
