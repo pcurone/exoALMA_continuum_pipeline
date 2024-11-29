@@ -35,8 +35,11 @@ im_mdl = True    # CLEAN the frank model
 
 #####  Plot settings #####
 img_lim = 1.3     # multiple of rout, used to set the limit of the images and the intesity radial profile
-index_ticks = 0.5     # arcsec, spacing of the major ticks in figures
+maj_ticks = 0.5          # arcsec, spacing of the major ticks in figures
+min_ticks = maj_ticks/5  # arcsec, spacing of the minor ticks in figures
 
+FOV_gofish = 5     # Clip the image cube down to a specific field-of-view spanning a range ``FOV``, where ``FOV`` is in [arcsec]
+dr_gofish = None     #  Width of the annuli to split the integrated region into in [arcsec]. Default is quater of the beam major axis
 
 
 ###############################
@@ -60,7 +63,7 @@ if im_dat:
 ##########################
 
 # load data
-dhdu = fits.open('CLEAN/'+target+'_data.fits')
+dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits")
 dimg, hd = np.squeeze(dhdu[0].data), dhdu[0].header
 
 # parse coordinate frame indices into physical numbers
@@ -114,10 +117,10 @@ ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 
 # axes style
 index_ticks = 0.5
-ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
-ax.xaxis.set_minor_locator(MultipleLocator(index_ticks/4))
-ax.yaxis.set_major_locator(MultipleLocator(index_ticks))
-ax.yaxis.set_minor_locator(MultipleLocator(index_ticks/4)) 
+ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
+ax.yaxis.set_major_locator(MultipleLocator(maj_ticks))
+ax.yaxis.set_minor_locator(MultipleLocator(min_ticks)) 
 ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=5,width=2.5, length=6,direction='in',color='w')
 ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=5,width=1.5, length=4,direction='in',color='w')
 for side in ax.spines.keys():  # 'top', 'bottom', 'left', 'right'
@@ -137,7 +140,7 @@ cb.ax.minorticks_on()
 # adjust layout
 fig.subplots_adjust(wspace=0.02)
 fig.subplots_adjust(left=0.11, right=0.89, bottom=0.1, top=0.98)
-fig.savefig('figs/'+target+'_dataimage.pdf', bbox_inches='tight')
+fig.savefig(f"figs/{target}_dataimage_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
 
 
 ##################################
@@ -150,7 +153,7 @@ if frank:
     print('....')
 
     # load the visibility data
-    dat = np.load('../data/'+target+'_continuum.vis.npz')
+    dat = np.load(f'../data/{target}_continuum.vis.npz')
     u, v, vis, wgt = dat['u'], dat['v'], dat['Vis'], dat['Wgt']
 
     # set the disk viewing geometry
@@ -172,7 +175,7 @@ if frank:
     make_full_fig(u, v, vis, wgt, sol, bin_widths=[1e4, 5e4], save_prefix='fits/'+target)
 
     # save the fit
-    save_fit(u, v, vis, wgt, sol, prefix='fits/'+target)
+    save_fit(u, v, vis, wgt, sol, prefix=f'fits/{target}')
 
     print('....')
     print('Finished visibility modeling')
@@ -208,115 +211,112 @@ c1 = np.vstack([c1, np.ones((32, 4))])
 colors = np.vstack((c1, c2))
 mymap = mcolors.LinearSegmentedColormap.from_list('eddymap', colors)
 
-if os.path.exists('CLEAN/'+target+'_resid.fits'):
-    print('....')
-    print('Making residual +/- plot')
-    print('using file created on: %s' % \
-          time.ctime(os.path.getctime('CLEAN/'+target+'_resid.fits')))
-    print('....')
+print('....')
+print('Making residual +/- plot')
+print('....')
 
-    # load residual image
-    rhdu = fits.open('CLEAN/'+target+'_resid.fits')
-    rimg = np.squeeze(rhdu[0].data)
+# load residual image
+rhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_resid_robust{disk.disk[target]['crobust']}.fits")
+rimg = np.squeeze(rhdu[0].data)
 
-    dhdu = fits.open('CLEAN/'+target+'_data.fits')
-    hd = dhdu[0].header
+dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits")
+hd = dhdu[0].header
 
-    # parse coordinate frame indices into physical numbers
-    RA = 3600 * hd['CDELT1'] * (np.arange(hd['NAXIS1']) - (hd['CRPIX1'] - 1)) 
-    DEC = 3600 * hd['CDELT2'] * (np.arange(hd['NAXIS2']) - (hd['CRPIX2'] - 1))
-    dRA, dDEC = np.meshgrid(RA - disk.disk[target]['dx'], 
-                            DEC - disk.disk[target]['dy'])
-    freq = hd['CRVAL3']
+# parse coordinate frame indices into physical numbers
+RA = 3600 * hd['CDELT1'] * (np.arange(hd['NAXIS1']) - (hd['CRPIX1'] - 1)) 
+DEC = 3600 * hd['CDELT2'] * (np.arange(hd['NAXIS2']) - (hd['CRPIX2'] - 1))
+dRA, dDEC = np.meshgrid(RA - disk.disk[target]['dx'], 
+                        DEC - disk.disk[target]['dy'])
+freq = hd['CRVAL3']
 
-    # disk-frame polar coordinates
-    inclr = np.radians(disk.disk[target]['incl'])
-    PAr = np.radians(disk.disk[target]['PA'])
-    xd = (dRA * np.cos(PAr) - dDEC * np.sin(PAr)) / np.cos(inclr)
-    yd = (dRA * np.sin(PAr) + dDEC * np.cos(PAr))
-    r, theta = np.sqrt(xd**2 + yd**2), np.degrees(np.arctan2(yd, xd))
+# disk-frame polar coordinates
+inclr = np.radians(disk.disk[target]['incl'])
+PAr = np.radians(disk.disk[target]['PA'])
+xd = (dRA * np.cos(PAr) - dDEC * np.sin(PAr)) / np.cos(inclr)
+yd = (dRA * np.sin(PAr) + dDEC * np.cos(PAr))
+r, theta = np.sqrt(xd**2 + yd**2), np.degrees(np.arctan2(yd, xd))
 
-    # beam parameters
-    bmaj, bmin, bPA = 3600 * hd['BMAJ'], 3600 * hd['BMIN'], hd['BPA']
+# beam parameters
+bmaj, bmin, bPA = 3600 * hd['BMAJ'], 3600 * hd['BMIN'], hd['BPA']
 
-    # image setups
-    rout = disk.disk[target]['rout']
-    im_bounds = (dRA.max(), dRA.min(), dDEC.min(), dDEC.max())
-    dRA_lims, dDEC_lims = [img_lim*rout, -img_lim*rout], [-img_lim*rout, img_lim*rout]
+# image setups
+rout = disk.disk[target]['rout']
+im_bounds = (dRA.max(), dRA.min(), dDEC.min(), dDEC.max())
+dRA_lims, dDEC_lims = [img_lim*rout, -img_lim*rout], [-img_lim*rout, img_lim*rout]
 
-    # set up plot
-    plt.style.use('classic')
-    fig = plt.figure(figsize=(7.0, 5.9))
-    gs  = gridspec.GridSpec(1, 2, width_ratios=(1, 0.04))
+# set up plot
+plt.style.use('classic')
+fig = plt.figure(figsize=(7.0, 5.9))
+gs  = gridspec.GridSpec(1, 2, width_ratios=(1, 0.04))
 
-    # image (sky-plane)
-    ax = fig.add_subplot(gs[0,0])
-    vmin, vmax = -5, 5
-    norm = ImageNormalize(vmin=vmin, vmax=vmax, stretch=LinearStretch())
-    im = ax.imshow(1e3*rimg / disk.disk[target]['RMS'], origin='lower', 
-                   cmap=mymap, extent=im_bounds, 
-                   norm=norm, aspect='equal')
+# image (sky-plane)
+ax = fig.add_subplot(gs[0,0])
+vmin, vmax = -5, 5
+norm = ImageNormalize(vmin=vmin, vmax=vmax, stretch=LinearStretch())
+im = ax.imshow(1e3*rimg / disk.disk[target]['RMS'], origin='lower', 
+                cmap=mymap, extent=im_bounds, 
+                norm=norm, aspect='equal')
 
-    # annotations
-    tt = np.linspace(-np.pi, np.pi, 91)
-    inclr = np.radians(disk.disk[target]['incl'])
-    PAr = np.radians(disk.disk[target]['PA'])
-    rEllipse = disk.disk[target]['rEllipse']
-    for ir in range(len(rEllipse)):
-        # mark gap boundaries
-        xe, ye = rEllipse[ir] * np.cos(tt) * np.cos(inclr), rEllipse[ir] * np.sin(tt)
-        ax.plot( xe * np.cos(PAr) + ye * np.sin(PAr),
-            -xe * np.sin(PAr) + ye * np.cos(PAr), '-', color='lightgray',
-            lw=0.8, alpha=0.8)
+# annotations
+tt = np.linspace(-np.pi, np.pi, 91)
+inclr = np.radians(disk.disk[target]['incl'])
+PAr = np.radians(disk.disk[target]['PA'])
+rEllipse = disk.disk[target]['rEllipse']
+for ir in range(len(rEllipse)):
+    # mark gap boundaries
+    xe, ye = rEllipse[ir] * np.cos(tt) * np.cos(inclr), rEllipse[ir] * np.sin(tt)
+    ax.plot( xe * np.cos(PAr) + ye * np.sin(PAr),
+        -xe * np.sin(PAr) + ye * np.cos(PAr), '-', color='lightgray',
+        lw=0.8, alpha=0.8)
 
-    # mark Rout
-    xb, yb = rout * np.cos(tt) * np.cos(inclr), rout * np.sin(tt)
-    ax.plot( xb * np.cos(PAr) + yb * np.sin(PAr),
-            -xb * np.sin(PAr) + yb * np.cos(PAr), '--', color='lightgray',
-            lw=0.8, alpha=0.5)
+# mark Rout
+xb, yb = rout * np.cos(tt) * np.cos(inclr), rout * np.sin(tt)
+ax.plot( xb * np.cos(PAr) + yb * np.sin(PAr),
+        -xb * np.sin(PAr) + yb * np.cos(PAr), '--', color='lightgray',
+        lw=0.8, alpha=0.5)
 
 
-    # beam
-    beam = Ellipse((dRA_lims[0] + 0.1*np.diff(dRA_lims), 
-                    dDEC_lims[0] + 0.1*np.diff(dDEC_lims)), bmaj, bmin, angle=90-bPA, 
-                    edgecolor='k', lw=1.5, facecolor='none', hatch='/////')
-    ax.add_artist(beam)
+# beam
+beam = Ellipse((dRA_lims[0] + 0.1*np.diff(dRA_lims), 
+                dDEC_lims[0] + 0.1*np.diff(dDEC_lims)), bmaj, bmin, angle=90-bPA, 
+                edgecolor='k', lw=1.5, facecolor='none', hatch='/////')
+ax.add_artist(beam)
 
-    # limits, labeling
-    ax.set_xlim(dRA_lims)
-    ax.set_ylim(dDEC_lims)
-    ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
-    ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+# limits, labeling
+ax.set_xlim(dRA_lims)
+ax.set_ylim(dDEC_lims)
+ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 
-    # axes style
-    ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
-    ax.xaxis.set_minor_locator(MultipleLocator(index_ticks/4))
-    ax.yaxis.set_major_locator(MultipleLocator(index_ticks))
-    ax.yaxis.set_minor_locator(MultipleLocator(index_ticks/4)) 
-    ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=5,width=2.5, length=6,direction='in',color='k')
-    ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=5,width=1.5, length=4,direction='in',color='k')
-    for side in ax.spines.keys():  # 'top', 'bottom', 'left', 'right'
-        ax.spines[side].set_linewidth(2)
-    
-    if annotate_res:
-        ax.text(0.05, 0.9, f'inc={disk.disk[target]["incl"]:.1f}°, PA = {disk.disk[target]["PA"]:.1f}°, \
-                \ndx = {disk.disk[target]["dx"]:.4f}\'\', dy = {disk.disk[target]["dy"]:.4f}\'\' ', 
-                transform=ax.transAxes)
+# axes style
+ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
+ax.yaxis.set_major_locator(MultipleLocator(maj_ticks))
+ax.yaxis.set_minor_locator(MultipleLocator(min_ticks)) 
+ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=5,width=2.5, length=6,direction='in',color='k')
+ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=5,width=1.5, length=4,direction='in',color='k')
+for side in ax.spines.keys():  # 'top', 'bottom', 'left', 'right'
+    ax.spines[side].set_linewidth(2)
 
-    # add a scalebar
-    cbax = fig.add_subplot(gs[:,1])
-    cb = Colorbar(ax=cbax, mappable=im, orientation='vertical',
-                  ticklocation='right') 
-    cb.outline.set_linewidth(2)
-    cb.ax.tick_params(which='major', labelsize=14,width=2.5, length=6,direction='in')
-    cb.ax.tick_params(which='minor', labelsize=14,width=1.5, length=4,direction='in')
-    cb.set_label('Residual S/N', rotation=270 , labelpad=26, fontsize = 17)
-    cb.ax.minorticks_on()
+if annotate_res:
+    ax.text(0.05, 0.9, f'inc={disk.disk[target]["incl"]:.1f}°, PA = {disk.disk[target]["PA"]:.1f}°, \
+            \ndx = {disk.disk[target]["dx"]:.4f}\'\', dy = {disk.disk[target]["dy"]:.4f}\'\' ', 
+            transform=ax.transAxes)
 
-    # adjust layout
-    fig.subplots_adjust(wspace=0.02)
-    fig.subplots_adjust(left=0.11, right=0.89, bottom=0.1, top=0.98)
-    fig.savefig('figs/'+target+'_resid.pdf', bbox_inches='tight')
+# add a scalebar
+cbax = fig.add_subplot(gs[:,1])
+cb = Colorbar(ax=cbax, mappable=im, orientation='vertical',
+                ticklocation='right') 
+cb.outline.set_linewidth(2)
+cb.ax.tick_params(which='major', labelsize=14,width=2.5, length=6,direction='in')
+cb.ax.tick_params(which='minor', labelsize=14,width=1.5, length=4,direction='in')
+cb.set_label('Residual S/N', rotation=270 , labelpad=26, fontsize = 17)
+cb.ax.minorticks_on()
+
+# adjust layout
+fig.subplots_adjust(wspace=0.02)
+fig.subplots_adjust(left=0.11, right=0.89, bottom=0.1, top=0.98)
+fig.savefig(f"figs/{target}_resid_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
 
 
 
@@ -324,7 +324,7 @@ if os.path.exists('CLEAN/'+target+'_resid.fits'):
 ##### PLOT THE SWEEP FRANK MODEL
 ######################################
 
-sol = load_sol('fits/'+target+'_frank_sol.obj')
+sol = load_sol(f'fits/{target}_frank_sol.obj')
 r_frank = sol.r
 Inu_frank = sol.I
 
@@ -370,10 +370,10 @@ ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 
 # axes style
-ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
-ax.xaxis.set_minor_locator(MultipleLocator(index_ticks/4))
-ax.yaxis.set_major_locator(MultipleLocator(index_ticks))
-ax.yaxis.set_minor_locator(MultipleLocator(index_ticks/4)) 
+ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
+ax.yaxis.set_major_locator(MultipleLocator(maj_ticks))
+ax.yaxis.set_minor_locator(MultipleLocator(min_ticks)) 
 ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=5,width=2.5, length=6,direction='in',color='w')
 ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=5,width=1.5, length=4,direction='in',color='w')
 for side in ax.spines.keys():  # 'top', 'bottom', 'left', 'right'
@@ -394,7 +394,7 @@ cb.ax.minorticks_on()
 fig.subplots_adjust(wspace=0.02)
 fig.subplots_adjust(left=0.11, right=0.89, bottom=0.1, top=0.98)
 
-fig.savefig('figs/'+target+'_Sweep_modelimage.pdf', bbox_inches='tight')
+fig.savefig(f'figs/{target}_Sweep_modelimage.pdf', bbox_inches='tight')
 
 
 #################################
@@ -403,7 +403,7 @@ fig.savefig('figs/'+target+'_Sweep_modelimage.pdf', bbox_inches='tight')
 
 # plot the radial profile and compare with the CLEAN map
 
-sol = load_sol('fits/'+target+'_frank_sol.obj')
+sol = load_sol(f'fits/{target}_frank_sol.obj')
 r_frank = sol.r
 Inu_frank = sol.I
 
@@ -421,8 +421,8 @@ Tb_frank_RJ = Jysr_to_Tb_RJ(Inu_frank, freq)
 Tb_frank_convolved_RJ = Jysr_to_Tb_RJ(Inu_frank_convolved, freq)
 
 # Obtain the CLEAN profile using the imagecube function from gofish
-cube = imagecube('CLEAN/'+target+'_data.fits', FOV=5.)
-r_clean, I_clean, dI_clean = cube.radial_profile(x0=disk.disk[target]['dx'], y0=disk.disk[target]['dy'], inc=disk.disk[target]['incl'], PA=disk.disk[target]['PA'], dr=1/50)
+cube = imagecube(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits", FOV=FOV_gofish)
+r_clean, I_clean, dI_clean = cube.radial_profile(x0=disk.disk[target]['dx'], y0=disk.disk[target]['dy'], inc=disk.disk[target]['incl'], PA=disk.disk[target]['PA'], dr=dr_gofish)
 # convert to brightness temperatures (full Planck law)
 Tb_clean, dTb_clean = Jysr_to_Tb_err(Jybeam_to_Jysr(I_clean, bmin, bmaj), Jybeam_to_Jysr(dI_clean, bmin, bmaj), freq)
 # convert to brightness temperatures (R-J limit)
@@ -442,8 +442,8 @@ for ax in axs.flat:
     ax.plot(r_frank[Tb_frank_convolved>0], Tb_frank_convolved[Tb_frank_convolved>0], 'b', lw=3, label='Frank convolved')
 
     ax.set_xlim([0, disk.disk[target]['Rmax']*disk.disk[target]['rout']])
-    ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
-    ax.xaxis.set_minor_locator(MultipleLocator(index_ticks/4))
+    ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+    ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
 
     ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=7,width=2.5, length=6,direction='in',color='k')
     ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=7,width=1.5, length=4,direction='in',color='k')
@@ -457,7 +457,7 @@ for ax in axs.flat:
 axs[1].set_yscale('log')
 axs[1].set_ylim([0.013, 50]) 
 
-fig.savefig('figs/'+target+'_Tb_profile.pdf', bbox_inches='tight')
+fig.savefig(f"figs/{target}_Tb_profile_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
 
 
 ##### Plot (R-J limit) #####
@@ -473,8 +473,8 @@ for ax in axs.flat:
     ax.plot(r_frank[Tb_frank_convolved_RJ>0], Tb_frank_convolved_RJ[Tb_frank_convolved_RJ>0], 'b', lw=3, label='Frank convolved')
 
     ax.set_xlim([0, disk.disk[target]['Rmax']*disk.disk[target]['rout']])
-    ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
-    ax.xaxis.set_minor_locator(MultipleLocator(index_ticks/4))
+    ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+    ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
 
     ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=7,width=2.5, length=6,direction='in',color='k')
     ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=7,width=1.5, length=4,direction='in',color='k')
@@ -488,7 +488,8 @@ for ax in axs.flat:
 axs[1].set_yscale('log')
 axs[1].set_ylim([0.013, 50]) 
 
-fig.savefig('figs/'+target+'_Tb_profile_RJ.pdf', bbox_inches='tight')
+fig.savefig(f"figs/{target}_Tb_profile_RJ_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
+
 
 
 ##########################
@@ -513,7 +514,7 @@ if im_mdl:
 ######################################
 
 # load model
-dhdu = fits.open('CLEAN/'+target+'_model.fits')
+dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_model_robust{disk.disk[target]['crobust']}.fits")
 dimg, hd = np.squeeze(dhdu[0].data), dhdu[0].header
 
 # parse coordinate frame indices into physical numbers
@@ -565,10 +566,10 @@ ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 
 # axes style
-ax.xaxis.set_major_locator(MultipleLocator(index_ticks))
-ax.xaxis.set_minor_locator(MultipleLocator(index_ticks/4))
-ax.yaxis.set_major_locator(MultipleLocator(index_ticks))
-ax.yaxis.set_minor_locator(MultipleLocator(index_ticks/4)) 
+ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
+ax.yaxis.set_major_locator(MultipleLocator(maj_ticks))
+ax.yaxis.set_minor_locator(MultipleLocator(min_ticks)) 
 ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=5,width=2.5, length=6,direction='in',color='w')
 ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=5,width=1.5, length=4,direction='in',color='w')
 for side in ax.spines.keys():  # 'top', 'bottom', 'left', 'right'
@@ -588,4 +589,4 @@ cb.ax.minorticks_on()
 # adjust layout
 fig.subplots_adjust(wspace=0.02)
 fig.subplots_adjust(left=0.11, right=0.89, bottom=0.1, top=0.98)
-fig.savefig('figs/'+target+'_CLEAN_modelimage.pdf', bbox_inches='tight')
+fig.savefig(f"figs/{target}_CLEAN_modelimage_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')

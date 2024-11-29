@@ -7,6 +7,12 @@ import diskdictionary as disk
 # Get target from environment variable
 target = os.environ['TARGET']
 
+# Set the right folder
+folder_path = f"CLEAN/robust{disk.disk[target]['crobust']}"
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+    print(f"Folder created: {folder_path}")
+
 ACA_disks = ["DM_Tau", "LkCa_15", "HD_34282", "J1604",
                      "J1615", "V4046_Sgr", "AA_Tau"]
 
@@ -27,7 +33,7 @@ ImportMS('../data/'+target+'_continuum.ms',
          'fits/'+target+'_frank_uv_fit', make_resid=True)
 
 # Perform the imaging
-imagename = 'CLEAN/'+target+'_resid'
+imagename = f"{folder_path}/{target}_resid_robust{disk.disk[target]['crobust']}"
 for ext in ['.image*', '.mask', '.model*', '.pb*', '.psf*', '.residual*',
             '.sumwt*', '.alpha*']:
     os.system('rm -rf '+imagename+ext)
@@ -41,6 +47,6 @@ tclean(vis='CLEAN/'+target+'_continuum.resid.ms', imagename=imagename, specmode=
        interactive=False, savemodel='none')
 
 # Export FITS files of the original + JvM-corrected images
-exportfits(imagename+'.image', imagename+'.fits', overwrite=True)
+exportfits(f'{imagename}.image', f'{imagename}.fits', overwrite=True)
 
 os.system('rm -rf *.last')
