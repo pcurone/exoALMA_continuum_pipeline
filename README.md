@@ -1,6 +1,6 @@
 This pipeline is inspired by the procedure used in [Andrews et al. 2021](https://ui.adsabs.harvard.edu/abs/2021ApJ...916...51A/abstract) ([GitHub repo](https://github.com/seanandrews/DSHARP_CPDs)).
 
-It has been expanded for the continuum analysis of the exoALMA sources (_exoALMA IV, Curone et al., subm._), including galario fits for determining geometrical parameters.
+It has been expanded for the continuum analysis of the [exoALMA Large Program](https://www.exoalma.com) (_exoALMA IV, Curone et al., subm._), including galario fits for determining geometrical parameters.
 
 
 In addition to standard Python packages, you’ll need the following tools installed:
