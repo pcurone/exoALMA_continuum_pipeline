@@ -207,9 +207,12 @@ if im_res:
 # residuals color map
 c2 = plt.cm.Reds(np.linspace(0, 1, 32))
 c1 = plt.cm.Blues_r(np.linspace(0, 1, 32))
-c1 = np.vstack([c1, np.ones((32, 4))])
+c1 = np.vstack([c1, np.ones((10, 4))])
 colors = np.vstack((c1, c2))
 mymap = mcolors.LinearSegmentedColormap.from_list('eddymap', colors)
+separations = 20   # discrete colorbar
+discrete_colors = plt.get_cmap(mymap)(np.linspace(0,1,separations))
+discrete_cmap = mcolors.ListedColormap(discrete_colors) 
 
 print('....')
 print('Making residual +/- plot')
@@ -254,7 +257,7 @@ ax = fig.add_subplot(gs[0,0])
 vmin, vmax = -5, 5
 norm = ImageNormalize(vmin=vmin, vmax=vmax, stretch=LinearStretch())
 im = ax.imshow(1e3*rimg / disk.disk[target]['RMS'], origin='lower', 
-                cmap=mymap, extent=im_bounds, 
+                cmap=discrete_cmap, extent=im_bounds, 
                 norm=norm, aspect='equal')
 
 # annotations
