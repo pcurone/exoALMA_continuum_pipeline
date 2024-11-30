@@ -81,7 +81,7 @@ Within the `frank_fit` folder you will find:
 - `run_CLEAN_frank.py` is the main file. It performs the frank fit, saving the results in the `frank_fit/fits` folder, and runs the CLEANing of the data, the frank model, and the residuals, saving the images in the `frank_fit/figs` folder.
 
 How to proceed:
-1. Modify the `diskdictionary.py` file with the right values of `incl`, `PA`, `dx`, `dy` from the galario fit (or your favorite method) and all the other parameters used by frank and CLEAN.
+1. Modify the `diskdictionary.py` file with the right values of `incl`, `PA`, `dx`, `dy` from the galario fit (or your favorite method) and all the other parameters used by frank and CLEAN. The script will automatically create subdirectories for each robust parameter used (`crobust`, remember also to modify accordingly the `RMS` value when changing the robust).
 2. Modify the `run_CLEAN_frank.py` in the first lines with:
    1. The right `target` name.
    2. The plot settings you prefer (`img_lim` and `index_ticks`).
