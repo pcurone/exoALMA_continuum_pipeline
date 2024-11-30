@@ -37,6 +37,7 @@ im_mdl = True    # CLEAN the frank model
 img_lim = 1.3     # multiple of rout, used to set the limit of the images and the intesity radial profile
 maj_ticks = 0.5          # arcsec, spacing of the major ticks in figures
 min_ticks = maj_ticks/5  # arcsec, spacing of the minor ticks in figures
+res_vmin, res_vmax = -5, 5    # min and max SNR values in the residual image
 
 FOV_gofish = 5     # Clip the image cube down to a specific field-of-view spanning a range ``FOV``, where ``FOV`` is in [arcsec]
 dr_gofish = None     #  Width of the annuli to split the integrated region into in [arcsec]. Default is quater of the beam major axis
@@ -116,7 +117,6 @@ ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 
 # axes style
-index_ticks = 0.5
 ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
 ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
 ax.yaxis.set_major_locator(MultipleLocator(maj_ticks))
@@ -254,8 +254,7 @@ gs  = gridspec.GridSpec(1, 2, width_ratios=(1, 0.04))
 
 # image (sky-plane)
 ax = fig.add_subplot(gs[0,0])
-vmin, vmax = -5, 5
-norm = ImageNormalize(vmin=vmin, vmax=vmax, stretch=LinearStretch())
+norm = ImageNormalize(vmin=res_vmin, vmax=res_vmax, stretch=LinearStretch())
 im = ax.imshow(1e3*rimg / disk.disk[target]['RMS'], origin='lower', 
                 cmap=discrete_cmap, extent=im_bounds, 
                 norm=norm, aspect='equal')
@@ -410,7 +409,6 @@ sol = load_sol(f'fits/{target}_frank_sol.obj')
 r_frank = sol.r
 Inu_frank = sol.I
 
-
 # Convolve the frank profile with the CLEAN beam
 # Units: [arcsec], [arcsec], [deg]
 clean_beam = {'bmaj':bmaj, 'bmin':bmin, 'beam_pa':bPA}
@@ -436,7 +434,7 @@ Tb_clean_RJ, dTb_clean_RJ = Jysr_to_Tb_RJ_err(Jybeam_to_Jysr(I_clean, bmin, bmaj
 fig, axs = plt.subplots(1, 2, figsize=(18,5))
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.35)
 
-axs[0].hlines(y=0, xmin=0, xmax=1.5*rout, color='gray', linestyle='dashed', linewidth=1)
+axs[0].hlines(y=0, xmin=0, xmax=img_lim*rout, color='gray', linestyle='dashed', linewidth=1)
 
 for ax in axs.flat:
     ax.fill_between(r_clean, Tb_clean-dTb_clean, Tb_clean+dTb_clean, color='gray', alpha=0.5)
@@ -444,7 +442,7 @@ for ax in axs.flat:
     ax.plot(r_frank, Tb_frank, 'r', lw=3, label='Frank logarithmic fit')
     ax.plot(r_frank[Tb_frank_convolved>0], Tb_frank_convolved[Tb_frank_convolved>0], 'b', lw=3, label='Frank convolved')
 
-    ax.set_xlim([0, disk.disk[target]['Rmax']*disk.disk[target]['rout']])
+    ax.set_xlim([0, img_lim*rout])
     ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
     ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
 
@@ -458,7 +456,7 @@ for ax in axs.flat:
         ax.spines[side].set_linewidth(3) 
 
 axs[1].set_yscale('log')
-axs[1].set_ylim([0.013, 50]) 
+axs[1].set_ylim([1.1, np.amax(Tb_frank)*1.3]) 
 
 fig.savefig(f"figs/{target}_Tb_profile_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
 
@@ -467,7 +465,7 @@ fig.savefig(f"figs/{target}_Tb_profile_robust{disk.disk[target]['crobust']}.pdf"
 fig, axs = plt.subplots(1, 2, figsize=(18,5))
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.35)
 
-axs[0].hlines(y=0, xmin=0, xmax=1.5*rout, color='gray', linestyle='dashed', linewidth=1)
+axs[0].hlines(y=0, xmin=0, xmax=img_lim*rout, color='gray', linestyle='dashed', linewidth=1)
 
 for ax in axs.flat:
     ax.fill_between(r_clean, Tb_clean_RJ-dTb_clean_RJ, Tb_clean_RJ+dTb_clean_RJ, color='gray', alpha=0.5)
@@ -475,7 +473,7 @@ for ax in axs.flat:
     ax.plot(r_frank, Tb_frank_RJ, 'r', lw=3, label='Frank logarithmic fit')
     ax.plot(r_frank[Tb_frank_convolved_RJ>0], Tb_frank_convolved_RJ[Tb_frank_convolved_RJ>0], 'b', lw=3, label='Frank convolved')
 
-    ax.set_xlim([0, disk.disk[target]['Rmax']*disk.disk[target]['rout']])
+    ax.set_xlim([0, img_lim*rout])
     ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
     ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
 
@@ -489,7 +487,7 @@ for ax in axs.flat:
         ax.spines[side].set_linewidth(3) 
 
 axs[1].set_yscale('log')
-axs[1].set_ylim([0.013, 50]) 
+axs[1].set_ylim([0.01, np.amax(Tb_frank_RJ)*1.3]) 
 
 fig.savefig(f"figs/{target}_Tb_profile_RJ_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
 
