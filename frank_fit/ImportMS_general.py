@@ -5,6 +5,7 @@ and different number of polarizations.
 In order to employ correctly this script, it is important that the uvtable used in frank has
 been produced in a similar manner (so mixing the ms and tb CASA task to take into account
 possible different number of channel per spw and different number of polarizations).
+If you want to use this script in the pipeline, simply change its name to "ImportMS.py".
 
 Don't worry if you get a warning about the ms.putdataold task:
 with CASA version 6.6.1.17, the newer ms.putdata had some bugs
