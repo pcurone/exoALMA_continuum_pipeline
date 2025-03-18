@@ -6,7 +6,7 @@ It has been expanded for the continuum analysis of the [exoALMA Large Program](h
 In addition to standard Python packages, you’ll need the following tools installed:
 - [CASA](https://casa.nrao.edu/casa_obtaining.shtml).
 - For galario:
-  - [galario](https://mtazzari.github.io/galario/). _(Note: On macOS with ARM chips, Galario installation may require creating an x86 environment using Rosetta 2 and installing via Conda)_.
+  - [galario](https://mtazzari.github.io/galario/). _(Note: On macOS with ARM chips, galario installation may require creating an x86 environment using Rosetta 2 and installing via Conda)_.
   - [uvplot](https://github.com/mtazzari/uvplot).
   - [emcee](https://emcee.readthedocs.io/en/stable/user/install/), [corner](https://corner.readthedocs.io/en/latest/install/), and [h5py](https://docs.h5py.org/en/latest/build.html).
 - For frank:
