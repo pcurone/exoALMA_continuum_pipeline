@@ -89,7 +89,7 @@ def Image2D_2rings_2arcs(x, y, f1, r1, sigma1, f2, r2, sigma2, f_arc1, r_arc1, s
     return model_image
 
 # 3 rings + 1 arcs
-@njit(fastmath=True, parallel=True)
+@conditional_njit
 def Image2D_3rings_1arc(x, y, f1, r1, sigma1, f2, r2, sigma2, f3, r3, sigma3, f_arc1, r_arc1, sigmar_arc1, phi_arc1, sigmaphi_arc1, inc_rad):
     model_image = (
         ring_2D(x, y, f1, r1, sigma1, inc_rad)
