@@ -12,11 +12,11 @@ def PointSource(f0, nR):
     delta[0] = 1
     return f0 * delta
 
-def CentralGaussian(f0, sigma, Rmin, dR, nR):
+def CentralGaussian(f0, sigma0, Rmin, dR, nR):
     """ Central Gaussian brightness profile """
     # radial grid
     R = np.linspace(Rmin, Rmin + dR*nR, nR, endpoint=False)
-    return f0 * np.exp(-0.5*(R/sigma)**2)
+    return f0 * np.exp(-0.5*(R/sigma0)**2)
 
 def CentraltaperedGaussian_centralGaussian(f0, sigma0, gamma, f1, sigma1, Rmin, dR, nR):
     """ Central Gaussian with exponential taper + central Gaussian brightness profile """
@@ -80,8 +80,8 @@ model_registry = {
     },
     "CentralGaussian": {
         "function": CentralGaussian,
-        "parameters": ["f0", "sigma", "Rmin", "dR", "nR"],
-        "labels": ["$f_0$", r"$\sigma$", "inc", "PA", r"$\Delta RA$", r"$\Delta Dec$"]
+        "parameters": ["f0", "sigma0", "Rmin", "dR", "nR"],
+        "labels": ["$f_0$", r"$\sigma_0$", "inc", "PA", r"$\Delta RA$", r"$\Delta Dec$"]
     },
     "CentraltaperedGaussian_centralGaussian": {
         "function": CentraltaperedGaussian_centralGaussian,
