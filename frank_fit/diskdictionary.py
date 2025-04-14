@@ -31,7 +31,7 @@ disk['AA_Tau'] = {'name': 'AA_Tau',
                  'cgain': 0.1,     # CLEAN gain parameter
                  'ccycleniter': 300,     # CLEAN Maximum number of minor-cycle iterations before triggering a major cycle
                  'ccyclefactor': 1.0,     # CLEAN Scaling on PSF sidelobe level to compute the minor-cycle stopping threshold
-                 'crobust': -0.5,     # CLEAN robust parameter
+                 'crobust': 0.5,     # CLEAN robust parameter
                  'ctaper': [],     # CLEAN uv-taper
                  'cniter': 50000,     # CLEAN Maximum number of iterations 
                  'cthresh': 1.0,     # Multiple of the noise rms, CLEAN threshold
