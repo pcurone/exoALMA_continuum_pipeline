@@ -3,7 +3,7 @@
 import os
 import numpy as np 
 
-target = 'PDS_66_noave'
+target = 'PDS_66'
 
 MS_filename = f'{target}_time_ave_continuum'
 listobs(vis=MS_filename+'.ms', listfile=MS_filename+'.ms.txt', overwrite=True) 
