@@ -36,5 +36,5 @@ disk['AA_Tau'] = {'name': 'AA_Tau',
                  'cniter': 50000,     # CLEAN Maximum number of iterations 
                  'cthresh': 1.0,     # Multiple of the noise rms, CLEAN threshold
                  'RMS': 0.056,   # mJy, noise rms
-                 'rEllipse': [0.06, 0.23, 0.44, 0.62],     # arcsec, ellipses to be drawn in the residual image
+                 'rEllipse': [],     # arcsec, ellipses to be drawn in the residual image
 }
