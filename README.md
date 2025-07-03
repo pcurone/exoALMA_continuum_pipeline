@@ -24,7 +24,7 @@ This pipeline was originally designed to process ALMA data only, averaged to one
 2. Place your starting continuum MS file (here `AA_Tau_time_ave_continuum.ms`) in the `data` folder. The `data` folder should also contain the `ExportMS_split_contspw_1ch.py` script.
 3. Open a CASA terminal in the `data` folder and execute:
    ```
-   execute('ExportMS_split_contspw_1ch.py')`
+   execfile('ExportMS_split_contspw_1ch.py')
    ``` 
    This script:
    1. Produces `AA_Tau_continuum.ms` with continuum spws averaged to 1 channel and 30s bins in time.
