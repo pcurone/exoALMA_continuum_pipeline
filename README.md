@@ -76,7 +76,7 @@ For highly non-axisymmetric sources (here, `CQ Tau`), use a 2D model. Within the
 Refer to the [frank documentation](https://discsim.github.io/frank/) for detailed guidance. 
 
 Within the `frank_fit` folder you will find:
-- `data_imaging.py` function to CLEAN the data.
+- `data_imaging.py` function to CLEAN the data. Info on the image is saved in `CLEAN\robust{robust}\Info_image_data_{target}_robust0.5.txt`.
 - `diskdictionary.py` file to store parameters of the disk, the CLEANing and the frank fit.
 - `model_imaging.py` function to CLEAN the frank model visibilities as if they were data, using the same uv locations of the observation.
 - `resid_imaging` function to CLEAN the residuals obtained by subtracting the frank fit from the observed data.
