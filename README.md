@@ -22,7 +22,8 @@ This pipeline was originally designed to process ALMA data only, averaged to one
 
 1. Create a source folder (here we consider `AA_Tau`). Within it, copy the `data`, `frank_fit` and `galario_fit` folders from this repository into it.
 2. Place your starting continuum MS file (here `AA_Tau_time_ave_continuum.ms`) in the `data` folder. The `data` folder should also contain the `ExportMS_split_contspw_1ch.py` script.
-3. Open a CASA terminal in the `data` folder and execute:
+3. In the `ExportMS_split_contspw_1ch.py` script, select the right `target` name, `MS_filename` and spectral windows.
+4. Open a CASA terminal in the `data` folder and execute:
    ```
    execfile('ExportMS_split_contspw_1ch.py')
    ``` 
