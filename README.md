@@ -1,7 +1,6 @@
-This pipeline is inspired by the procedure used in [Andrews et al. 2021](https://ui.adsabs.harvard.edu/abs/2021ApJ...916...51A/abstract) ([GitHub repo](https://github.com/seanandrews/DSHARP_CPDs)).
+This is the pipeline used to analyze the continuum emission of the [exoALMA Large Program](https://www.exoalma.com), with results presented in [Curone et al. 2025 (exoALMA IV)](https://ui.adsabs.harvard.edu/abs/2025ApJ...984L...9C/abstract).
 
-It has been expanded for the continuum analysis of the [exoALMA Large Program](https://www.exoalma.com), presented in [Curone et al. 2025 (exoALMA IV)](https://ui.adsabs.harvard.edu/abs/2025ApJ...984L...9C/abstract), including galario fits for determining geometrical parameters.
-
+This pipeline was initially inspired by the procedure developed in  [Andrews et al. 2021](https://ui.adsabs.harvard.edu/abs/2021ApJ...916...51A/abstract) ([GitHub repo](https://github.com/seanandrews/DSHARP_CPDs)).
 
 In addition to standard Python packages, you’ll need the following tools installed:
 - [CASA](https://casa.nrao.edu/casa_obtaining.shtml).
