@@ -47,7 +47,7 @@ For mostly axisymmetric sources, use a 1D profile model. Within the `galario_fit
    python galario_fit_1D.py
    ```
 4. Experiment with multiple runs for convergence.
-5. You can simply plot the results from a stored backend with:
+5. You can simply plot the results from a stored backend using the `plot_results_galario_fit_1D.py`, after properly fixing the “MODIFY HERE” section:
    ```
    python plot_results_galario_fit_1D.py
    ```
