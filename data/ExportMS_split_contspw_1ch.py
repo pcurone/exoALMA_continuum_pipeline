@@ -9,8 +9,9 @@ MS_filename = f'{target}_time_ave_continuum'
 listobs(vis=MS_filename+'.ms', listfile=MS_filename+'.ms.txt', overwrite=True) 
 
 contspws = '1,5,9,13,17,21,25,29,33,37,41,45'   # Select the spws you're interested here, in this case I'm selecting the continuum spws only
+# contspw = ''    # if you want to select all spws
 split(vis=MS_filename+'.ms', 
-      width=8,
+      width=100,   # just use a number that is higher that the maximum number of channels in a spw within your dataset
       spw=contspws,
       timebin='30s',
       datacolumn='data',
