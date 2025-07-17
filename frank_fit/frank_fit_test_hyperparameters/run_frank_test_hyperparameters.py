@@ -18,7 +18,7 @@ sys.path.append('..')
 import diskdictionary as disk
 
 # controls
-target = 'CX_Tau'
+target = 'AA_Tau'
 
 methods = ['LogNormal', 'Normal']
 wsmooth_range = [1e-4, 1e-3, 1e-2, 1e-1]
