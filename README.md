@@ -83,6 +83,11 @@ Within the `frank_fit` folder you will find:
 - `ImportMS.py` function called by `model_imaging.py` and `resid_imaging.py` to produce the model and residuals MS tables (`frank_fit/CLEAN/AA_Tau_continuum.model.ms` and `frank_fit/CLEAN/AA_Tau_continuum.resid.ms`) from `data/AA_Tau_continuum.ms`
 - `run_CLEAN_frank.py` is the main file. It performs the frank fit, saving the results in the `frank_fit/fits` folder, and runs the CLEANing of the data, the frank model, and the residuals, saving the images in the `frank_fit/figs` folder.
 
+There are also two extra folders that are meant to perform further tests on the frank fit (and therefore are not necessary to run):
+- `frank_fit_bootstrap/` containing the `frank_bootstrap.py` file, which runs many iterations of the frank fit varying the geometrical parameters in order to provide a reasonable estimate of the uncertainty on the frank profile. The results of the bootstrap are read by `read_results.py`, which can be used to estimate uncertainties on the radial extent (R68, R90, R95) of the dust continuum disk.
+- `frank_fit_test_hyperparameters/` containing the `run_frank_test_hyperparameters.py` file, which runs fits using various values of the frank hyperparameters to test their effect on the results.
+
+
 How to proceed:
 1. Modify the `diskdictionary.py` file with the right values of `incl`, `PA`, `dx`, `dy` from the galario fit (or your favorite method) and all the other parameters used by frank and CLEAN. The script will automatically create subdirectories for each robust parameter used (`crobust`, remember also to modify accordingly the `RMS` value when changing the robust).
 2. Modify the `run_CLEAN_frank.py` in the first lines with:
