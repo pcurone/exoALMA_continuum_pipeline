@@ -40,6 +40,8 @@ tb.close()
 # get frequency information
 tb.open(target+'_continuum.ms/SPECTRAL_WINDOW')
 freqlist = np.squeeze(tb.getcol("CHAN_FREQ"))
+if freqlist.ndim == 0:
+    freqlist = np.array([freqlist])
 tb.close()
 
 # get rid of any lingering flagged columns (but there shouldn't be any!)
