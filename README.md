@@ -14,7 +14,11 @@ In addition to standard Python packages, you’ll need the following tools insta
   - [frank](https://github.com/discsim/frank).
   - [gofish](https://github.com/richteague/gofish).
 
-
+This pipeline consists of four main steps, organized by folders and to be followed in order:
+1. `data/` folder: contains a script to be run in a CASA terminal to average the original measurement set in frequency and time, and to export the uv tables for both galario and frank.
+2. `galario_fit/` folder: scripts to run galario (either in 1D or 2D). The goal of this step is to retrieve the geometrical parameters of the disk (inclination, position angle, RA and Dec offsets between the disk center and the observation phase center). Given the nature of the galario fit, this step is by far the most time-consuming. However, it can be skipped if the geometrical parameters are already known from the literature or other methods.
+3. `frank_fit/` folder: scripts to run the frank model, perform CLEANing, and generate the model and residual images.
+4. `analysis/` folder: a suite of Python notebooks to carry out further analysis on the data and the obtained frank model fit.
 
 # 1. From Measurement Set (MS) to uv tables
 
