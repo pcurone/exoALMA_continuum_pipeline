@@ -16,7 +16,7 @@ In addition to standard Python packages, you’ll need the following tools insta
 
 
 
-# From Measurement Set (MS) to uv tables
+# 1. From Measurement Set (MS) to uv tables
 
 This pipeline was originally designed to process ALMA data only, averaged to one channel per spectral window. For a more general approach (different numbers of channels per spectral window and/or VLA data), use `ExportMS_split_general.py` instead of `ExportMS_split_contspw_1ch.py` and `ImportMS_general.py` instead of `ImportMS.py`
 
@@ -33,7 +33,7 @@ This pipeline was originally designed to process ALMA data only, averaged to one
    2. Generates uv tables for frank and galario (`AA_Tau_continuum.vis.npz` for frank and `AA_Tau_galario_uvtable.txt` for galario)
 
 
-# galario [(Tazzari et al. 2018)](https://ui.adsabs.harvard.edu/abs/2018MNRAS.476.4527T/abstract)
+# 2. galario [(Tazzari et al. 2018)](https://ui.adsabs.harvard.edu/abs/2018MNRAS.476.4527T/abstract)
 
 Check the [galario documentation](https://mtazzari.github.io/galario/) for details (in particular the 'Getting started' tutorial).
 
@@ -71,7 +71,7 @@ For highly non-axisymmetric sources (here, `CQ Tau`), use a 2D model. Within the
    python plot_results_galario_fit_2D.py
    ```
 
-# frank [(Jennings et al. 2020)](https://ui.adsabs.harvard.edu/abs/2020MNRAS.495.3209J/abstract)
+# 3. frank [(Jennings et al. 2020)](https://ui.adsabs.harvard.edu/abs/2020MNRAS.495.3209J/abstract)
 
 Refer to the [frank documentation](https://discsim.github.io/frank/) for detailed guidance. 
 
