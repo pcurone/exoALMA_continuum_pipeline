@@ -120,3 +120,7 @@ Within the `analysis` folder, the following Python notebooks are available to pe
 - `compute_NAI.ipynb`:Computes the nonxisymmetry nndex (NAI) of the source (see Section 4.2 of the exoALMA IV paper).
 - `compute_lambda_out.ipynb`: Determines $\lambda_\mathrm{out}$, the scale length of the faint outer disk emission falloff (see Section 5.4 of the exoALMA IV paper).
 
+
+
+### Acknowledgments
+I would like to thank the collaborators who reported bugs or whose discussions helped improve the pipeline: Daniele Fasano, Carolina Agurto, and Andrés Zuleta.
