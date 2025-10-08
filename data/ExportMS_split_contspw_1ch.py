@@ -11,7 +11,7 @@ listobs(vis=MS_filename+'.ms', listfile=MS_filename+'.ms.txt', overwrite=True)
 contspws = ''    # if you want to select all spws
 #contspws = '1,5,9,13,17,21,25,29,33,37,41,45'   # Select the spws of interest here, in this case I'm selecting the continuum spws only
 split(vis=MS_filename+'.ms', 
-      width=100,   # just use a number that is higher that the maximum number of channels in a spw within your dataset
+      width=100,   # just use a number that is higher than the maximum number of channels in a spw within your dataset
       spw=contspws,
       timebin='30s',
       datacolumn='data',
