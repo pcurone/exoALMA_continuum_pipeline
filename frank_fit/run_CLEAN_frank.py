@@ -38,6 +38,7 @@ img_lim = 1.3     # multiple of rout, used to set the limit of the images and th
 maj_ticks = 0.5          # arcsec, spacing of the major ticks in figures
 min_ticks = maj_ticks/5  # arcsec, spacing of the minor ticks in figures
 res_vmin, res_vmax = -5, 5    # min and max SNR values in the residual image
+int_vmax_factor = 1.0    # sets the fraction of the image intensity maximum (1.0 = full range)
 
 FOV_gofish = 5     # Clip the image cube down to a specific field-of-view spanning a range ``FOV``, where ``FOV`` is in [arcsec]
 dr_gofish = None     #  Width of the annuli to split the integrated region into in [arcsec]. Default is quater of the beam major axis
@@ -64,7 +65,10 @@ if im_dat:
 ##########################
 
 # load data
-dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits")
+if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
+        dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.tt0.fits")
+else:
+        dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits")
 dimg, hd = np.squeeze(dhdu[0].data), dhdu[0].header
 
 # parse coordinate frame indices into physical numbers
@@ -98,7 +102,7 @@ gs  = gridspec.GridSpec(1, 2, width_ratios=(1, 0.04))
 ax = fig.add_subplot(gs[0,0])
 
 # intensity limits, and stretch
-norm_data_int = ImageNormalize(vmin=0, vmax=np.nan_to_num(dimg*1e3).max(), stretch=AsinhStretch())
+norm_data_int = ImageNormalize(vmin=0, vmax=np.nan_to_num(dimg*1e3).max() * int_vmax_factor, stretch=AsinhStretch())
 cmap = 'inferno'
 
 im = ax.imshow(dimg*1e3, origin='lower', cmap=cmap, extent=im_bounds, 
@@ -219,10 +223,16 @@ print('Making residual +/- plot')
 print('....')
 
 # load residual image
-rhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_resid_robust{disk.disk[target]['crobust']}.fits")
+if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
+        rhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_resid_robust{disk.disk[target]['crobust']}.tt0.fits")
+else:
+        rhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_resid_robust{disk.disk[target]['crobust']}.fits")
 rimg = np.squeeze(rhdu[0].data)
 
-dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits")
+if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
+        dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.tt0.fits")
+else:
+        dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits")
 hd = dhdu[0].header
 
 # parse coordinate frame indices into physical numbers
@@ -341,7 +351,7 @@ gs  = gridspec.GridSpec(1, 2, width_ratios=(1, 0.04))
 ax = fig.add_subplot(gs[0,0])
 
 # intensity limits, and stretch
-norm = ImageNormalize(vmin=0, vmax=1, stretch=AsinhStretch())
+norm = ImageNormalize(vmin=0, vmax=1 * int_vmax_factor, stretch=AsinhStretch())
 cmap = 'inferno'
 
 im = ax.imshow(sweep_img[0]/np.nan_to_num(sweep_img[0]).max(), origin='lower', cmap=cmap, extent=im_bounds_sweep, 
@@ -422,7 +432,10 @@ Tb_frank_RJ = Jysr_to_Tb_RJ(Inu_frank, freq)
 Tb_frank_convolved_RJ = Jysr_to_Tb_RJ(Inu_frank_convolved, freq)
 
 # Obtain the CLEAN profile using the imagecube function from gofish
-cube = imagecube(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits", FOV=FOV_gofish)
+if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
+        cube = imagecube(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.tt0.fits", FOV=FOV_gofish)
+else:
+        cube = imagecube(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits", FOV=FOV_gofish)
 r_clean, I_clean, dI_clean = cube.radial_profile(x0=disk.disk[target]['dx'], y0=disk.disk[target]['dy'], inc=disk.disk[target]['incl'], PA=disk.disk[target]['PA'], dr=dr_gofish)
 # convert to brightness temperatures (full Planck law)
 Tb_clean, dTb_clean = Jysr_to_Tb_err(Jybeam_to_Jysr(I_clean, bmin, bmaj), Jybeam_to_Jysr(dI_clean, bmin, bmaj), freq)
@@ -515,7 +528,10 @@ if im_mdl:
 ######################################
 
 # load model
-dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_model_robust{disk.disk[target]['crobust']}.fits")
+if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
+        dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_model_robust{disk.disk[target]['crobust']}.tt0.fits")
+else:
+        dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_model_robust{disk.disk[target]['crobust']}.fits")
 dimg, hd = np.squeeze(dhdu[0].data), dhdu[0].header
 
 # parse coordinate frame indices into physical numbers

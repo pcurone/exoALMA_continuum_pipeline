@@ -34,7 +34,8 @@ ImportMS('../data/'+target+'_continuum.ms',
 
 # Perform the imaging
 imagename = f"{folder_path}/{target}_model_robust{disk.disk[target]['crobust']}"
-for ext in ['.image', '.mask', '.model', '.pb', '.psf', '.residual', '.sumwt']:
+for ext in ['.image*', '.mask', '.model*', '.pb*', '.psf*', '.residual*', 
+            '.sumwt*', '.alpha*']:
     os.system('rm -rf '+imagename+ext)
 tclean(vis='CLEAN/'+target+'_continuum.model.ms', imagename=imagename, specmode='mfs', 
        deconvolver=disk.disk[target]['cdeconvolver'], scales=disk.disk[target]['cscales'], 
@@ -46,6 +47,9 @@ tclean(vis='CLEAN/'+target+'_continuum.model.ms', imagename=imagename, specmode=
        interactive=False, savemodel='none')
 
 # Export FITS files of the original 
-exportfits(f'{imagename}.image', f'{imagename}.fits', overwrite=True)
+if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
+        exportfits(f'{imagename}.image.tt0', f'{imagename}.tt0.fits', overwrite=True)
+else:
+        exportfits(f'{imagename}.image', f'{imagename}.fits', overwrite=True)
 
 os.system('rm -rf *.last')

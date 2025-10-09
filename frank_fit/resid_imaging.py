@@ -46,7 +46,10 @@ tclean(vis='CLEAN/'+target+'_continuum.resid.ms', imagename=imagename, specmode=
        niter=disk.disk[target]['cniter'], threshold=f"{disk.disk[target]['cthresh']*disk.disk[target]['RMS']}mJy", 
        interactive=False, savemodel='none')
 
-# Export FITS files of the original + JvM-corrected images
-exportfits(f'{imagename}.image', f'{imagename}.fits', overwrite=True)
+# Export FITS files of the original 
+if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
+        exportfits(f'{imagename}.image.tt0', f'{imagename}.tt0.fits', overwrite=True)
+else:
+        exportfits(f'{imagename}.image', f'{imagename}.fits', overwrite=True)
 
 os.system('rm -rf *.last')
