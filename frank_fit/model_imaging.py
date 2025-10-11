@@ -37,7 +37,7 @@ imagename = f"{folder_path}/{target}_model_robust{disk.disk[target]['crobust']}"
 for ext in ['.image*', '.mask', '.model*', '.pb*', '.psf*', '.residual*', 
             '.sumwt*', '.alpha*']:
     os.system('rm -rf '+imagename+ext)
-tclean(vis='CLEAN/'+target+'_continuum.model.ms', imagename=imagename, specmode='mfs', 
+tclean(vis='CLEAN/'+target+'_continuum.model.ms', imagename=imagename, specmode='mfs', datacolumn='data',
        deconvolver=disk.disk[target]['cdeconvolver'], scales=disk.disk[target]['cscales'], 
        nterms=disk.disk[target]['cnterms'],mask=mask, imsize=disk.disk[target]['cimsize'], 
        gridder=grid, cell=disk.disk[target]['ccell'], gain=disk.disk[target]['cgain'],
