@@ -8,7 +8,7 @@ target = 'PDS_66'
 MS_filename = f'{target}_time_ave_continuum'
 listobs(vis=MS_filename+'.ms', listfile=MS_filename+'.ms.txt', overwrite=True) 
 
-contspws = ' '   # Select the spws you're interested here
+contspws = ''   # Select the spws you're interested here
 split(vis=MS_filename+'.ms', 
       width=8,
       spw=contspws,
