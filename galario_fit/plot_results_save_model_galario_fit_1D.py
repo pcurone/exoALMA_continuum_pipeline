@@ -101,7 +101,7 @@ fig = corner.corner(samples, labels=param_labels,
                     label_kwargs={'labelpad':20, 'fontsize':15}, fontsize=8, title_fmt = '.5f')
 
 #plt.show()
-plt.savefig(f'Cornerplot_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
+plt.savefig(f'products/{target}_cornerplot_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}iters.pdf', bbox_inches='tight')
 
 
 #######################
@@ -169,7 +169,7 @@ axes[0].tick_params(which='both',right=True,top=True, width=3, length=6,labelsiz
 axes[1].tick_params(which='both',right=True,top=True, width=3, length=6,labelsize=14, direction='in',pad=5)
 
 #plt.show()
-plt.savefig(f'Radialprofile_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
+plt.savefig(f'products/{target}_radialprofile_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}iters.pdf', bbox_inches='tight')
 
 
 ########################################################
@@ -181,18 +181,52 @@ print('Get uvtable with galario model')
 # Create the formatted header manually
 header = (
     f"# Visbilities obtained from the galario model {selected_model} with {nwalkers} walkers and {backend.iteration} total iterations\n"
-    f"# wavelength[m]\n"
-    f"{wle}\n"
     f"# Columns:\tu[wavelength]\tv[wavelength]\tRe(V)[Jy]\tIm(V)[Jy]\tweight"
 )
 # Save the data
 np.savetxt(
-    f"uvtable_galario_model_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.txt",
+    f"products/{target}_uvtable_galario_model_{selected_model}_{nwalkers}walkers_{backend.iteration}iters.txt",
     np.column_stack([u, v, vis_mod.real, vis_mod.imag, w]),
     fmt='%10.6e',
     delimiter='\t',
     header=header,
     comments=""  # Removes the default '#' added by savetxt to the header
+)
+
+
+########################################################
+#####   SAVE INTENSITY PROFILE OF GALARIO MODEL    #####
+########################################################
+
+# Radii array in arcsec
+R_arr_arcsec = (Rmin + dR * np.arange(nR)) / arcsec
+
+# Identify amplitude parameters automatically (f0, f1, ...)
+amp_keys = sorted([k for k in param_dict.keys() if k.startswith("f")])
+
+components = []
+for amp in amp_keys:
+    p = funtion_param_dict.copy()
+    for a in amp_keys:
+        if a != amp:
+            p[a] = 0.0
+    comp = model_function(**p, Rmin=Rmin, dR=dR, nR=nR)
+    components.append((amp, comp))
+components = dict(components)
+
+# Save results 
+# Build array: [R, f_total, component1, component2, ...]
+data_to_save = np.column_stack([R_arr_arcsec, f] + [components[k] for k in amp_keys])
+
+header = "# Radial intensity profile from the galario model {selected_model} with {nwalkers} walkers and {backend.iteration} total iterations\n"
+header += "# Columns:\tRadius[arcsec]\ttotal_intensity[Jy/sr]\t" + "\t".join([f"{k}[Jy/sr]" for k in amp_keys])
+np.savetxt(
+    f"products/{target}_radial_intensity_profile_galario_model_{selected_model}_{nwalkers}walkers_{backend.iteration}iters.txt",
+    data_to_save,
+    fmt="%.6e",
+    delimiter="\t",
+    header=header,
+    comments=""
 )
 
 
@@ -211,7 +245,7 @@ for i in range(ndim):
     ax.yaxis.set_label_coords(-0.1, 0.5)
 
 axes[-1].set_xlabel("step number")
-plt.savefig(f'Walkers_path_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
+plt.savefig(f'products/{target}_walker_path_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}iters.pdf', bbox_inches='tight')
 
 # Calculate autocorrelation time and check chain length
 try:
