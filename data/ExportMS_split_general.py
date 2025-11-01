@@ -10,7 +10,7 @@ listobs(vis=MS_filename+'.ms', listfile=MS_filename+'.ms.txt', overwrite=True)
 
 contspws = ''   # Select the spws you're interested here
 split(vis=MS_filename+'.ms', 
-      width=8,
+      width=100,
       spw=contspws,
       timebin='30s',
       datacolumn='data',
