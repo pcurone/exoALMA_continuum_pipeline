@@ -56,6 +56,7 @@ For mostly axisymmetric sources, use a 1D profile model. Within the `galario_fit
    ```
    python plot_results_save_model_galario_fit_1D.py
    ```
+   Results will be saved in the `products` folder.
 
 
 ## galario 2D
@@ -74,6 +75,7 @@ For highly non-axisymmetric sources (here, `CQ Tau`), use a 2D model. Within the
    ```
    python plot_results_save_model_galario_fit_2D.py
    ```
+   Results will be saved in the `products` folder.
 
 # 3. frank [(Jennings et al. 2020)](https://ui.adsabs.harvard.edu/abs/2020MNRAS.495.3209J/abstract)
 
