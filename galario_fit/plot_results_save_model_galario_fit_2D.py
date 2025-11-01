@@ -104,7 +104,7 @@ fig = corner.corner(samples, labels=param_labels,
                     label_kwargs={'labelpad':20, 'fontsize':15}, fontsize=8, title_fmt = '.5f')
 
 #plt.show()
-plt.savefig(f'Cornerplot_galario_2D_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
+plt.savefig(f'products/{target}_cornerplot_galario_2D_{selected_model}_{nwalkers}walkers_{backend.iteration}iters.pdf', bbox_inches='tight')
 
 
 #####################################
@@ -181,7 +181,7 @@ ax.set_ylabel('Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 for side in ax.spines.keys():  # 'top', 'bottom', 'left', 'right'
     ax.spines[side].set_linewidth(1)
     
-plt.savefig(f'Model_Image2D_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')  
+plt.savefig(f'products/{target}_model_Image2D_{selected_model}_{nwalkers}walkers_{backend.iteration}iters.pdf', bbox_inches='tight')  
 
 
 
@@ -220,7 +220,7 @@ axes[0].tick_params(which='both',right=True,top=True, width=3, length=6,labelsiz
 axes[1].tick_params(which='both',right=True,top=True, width=3, length=6,labelsize=14, direction='in',pad=5)
 
 #plt.show()
-plt.savefig(f'Radialprofile_galario_2D_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
+plt.savefig(f'products/{target}_radialprofile_galario_2D_{selected_model}_{nwalkers}walkers_{backend.iteration}iters.pdf', bbox_inches='tight')
 
 
 ########################################################
@@ -232,13 +232,11 @@ print('Get uvtable with galario model')
 # Create the formatted header manually
 header = (
     f"# Visbilities obtained from the galario model {selected_model} with {nwalkers} walkers and {backend.iteration} total iterations\n"
-    f"# wavelength[m]\n"
-    f"{wle}\n"
     f"# Columns:\tu[wavelength]\tv[wavelength]\tRe(V)[Jy]\tIm(V)[Jy]\tweight"
 )
 # Save the data
 np.savetxt(
-    f"uvtable_galario_2D_model_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.txt",
+    f"products/{target}_uvtable_galario_model_{selected_model}_{nwalkers}walkers_{backend.iteration}iters.txt",
     np.column_stack([u, v, vis_mod.real, vis_mod.imag, w]),
     fmt='%10.6e',
     delimiter='\t',
@@ -262,7 +260,7 @@ for i in range(ndim):
     ax.yaxis.set_label_coords(-0.1, 0.5)
 
 axes[-1].set_xlabel("step number")
-plt.savefig(f'Walkers_path_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}totiterations.pdf', bbox_inches='tight')
+plt.savefig(f'products/{target}_walker_path_galario_{selected_model}_{nwalkers}walkers_{backend.iteration}iters.pdf', bbox_inches='tight')
 
 # Calculate autocorrelation time and check chain length
 try:
