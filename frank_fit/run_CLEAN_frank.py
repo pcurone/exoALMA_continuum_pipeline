@@ -443,6 +443,37 @@ Tb_clean, dTb_clean = Jysr_to_Tb_err(Jybeam_to_Jysr(I_clean, bmin, bmaj), Jybeam
 Tb_clean_RJ, dTb_clean_RJ = Jysr_to_Tb_RJ_err(Jybeam_to_Jysr(I_clean, bmin, bmaj), Jybeam_to_Jysr(dI_clean, bmin, bmaj), freq)
 
 
+##### Plot (Jy/sr) #####
+fig, axs = plt.subplots(1, 2, figsize=(18,5))
+plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.35)
+
+axs[0].hlines(y=0, xmin=0, xmax=img_lim*rout, color='gray', linestyle='dashed', linewidth=1)
+
+for ax in axs.flat:
+    ax.fill_between(r_clean, Jybeam_to_Jysr(I_clean, bmin, bmaj)-Jybeam_to_Jysr(dI_clean, bmin, bmaj), Jybeam_to_Jysr(I_clean, bmin, bmaj)+Jybeam_to_Jysr(dI_clean, bmin, bmaj), color='gray', alpha=0.5)
+    ax.plot(r_clean, Jybeam_to_Jysr(I_clean, bmin, bmaj), 'k', lw=3, label='CLEAN')
+    ax.plot(r_frank, Inu_frank, 'r', lw=3, label='Frank logarithmic fit')
+    #ax.plot(r_frank[Inu_frank_convolved>0], Inu_frank_convolved[Inu_frank_convolved>0], 'b', lw=3, label='Frank convolved')
+
+    ax.set_xlim([0, img_lim*rout])
+    ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+    ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
+
+    ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=7,width=2.5, length=6,direction='in',color='k')
+    ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=7,width=1.5, length=4,direction='in',color='k')
+    ax.set_xlabel(r'$R \,\,$ [arcsec]', fontsize = 17, labelpad=10)
+    ax.set_ylabel('Intensity (Jy/sr)', fontsize = 17, labelpad=10)
+    ax.legend(fontsize=13)
+    
+    for side in ax.spines.keys():
+        ax.spines[side].set_linewidth(3) 
+
+axs[1].set_yscale('log')
+axs[1].set_ylim([1.1, np.amax(Inu_frank)*1.3]) 
+
+fig.savefig(f"figs/{target}_tot_Jysr_profile_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
+
+
 ##### Plot (full Planck) #####
 fig, axs = plt.subplots(1, 2, figsize=(18,5))
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.35)
@@ -453,7 +484,7 @@ for ax in axs.flat:
     ax.fill_between(r_clean, Tb_clean-dTb_clean, Tb_clean+dTb_clean, color='gray', alpha=0.5)
     ax.plot(r_clean, Tb_clean, 'k', lw=3, label='CLEAN')
     ax.plot(r_frank, Tb_frank, 'r', lw=3, label='Frank logarithmic fit')
-    ax.plot(r_frank[Tb_frank_convolved>0], Tb_frank_convolved[Tb_frank_convolved>0], 'b', lw=3, label='Frank convolved')
+    #ax.plot(r_frank[Tb_frank_convolved>0], Tb_frank_convolved[Tb_frank_convolved>0], 'b', lw=3, label='Frank convolved')
 
     ax.set_xlim([0, img_lim*rout])
     ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
@@ -471,7 +502,7 @@ for ax in axs.flat:
 axs[1].set_yscale('log')
 axs[1].set_ylim([1.1, np.amax(Tb_frank)*1.3]) 
 
-fig.savefig(f"figs/{target}_Tb_profile_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
+fig.savefig(f"figs/{target}_tot_Tb_profile_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
 
 
 ##### Plot (R-J limit) #####
@@ -484,7 +515,7 @@ for ax in axs.flat:
     ax.fill_between(r_clean, Tb_clean_RJ-dTb_clean_RJ, Tb_clean_RJ+dTb_clean_RJ, color='gray', alpha=0.5)
     ax.plot(r_clean, Tb_clean_RJ, 'k', lw=3, label='CLEAN')
     ax.plot(r_frank, Tb_frank_RJ, 'r', lw=3, label='Frank logarithmic fit')
-    ax.plot(r_frank[Tb_frank_convolved_RJ>0], Tb_frank_convolved_RJ[Tb_frank_convolved_RJ>0], 'b', lw=3, label='Frank convolved')
+    #ax.plot(r_frank[Tb_frank_convolved_RJ>0], Tb_frank_convolved_RJ[Tb_frank_convolved_RJ>0], 'b', lw=3, label='Frank convolved')
 
     ax.set_xlim([0, img_lim*rout])
     ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
@@ -502,7 +533,7 @@ for ax in axs.flat:
 axs[1].set_yscale('log')
 axs[1].set_ylim([0.01, np.amax(Tb_frank_RJ)*1.3]) 
 
-fig.savefig(f"figs/{target}_Tb_profile_RJ_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
+fig.savefig(f"figs/{target}_tot_Tb_profile_RJ_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
 
 
 
