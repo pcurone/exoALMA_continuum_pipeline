@@ -111,6 +111,19 @@ How to proceed:
    ```
 4. You can create summary plots comparing observed data and frank model with the `plot_images.ipynb` notebook.
 
+# 3.5 CLEAN images of galario model and residuals
+
+It is possible to obtain CLEAN images of the galario model and residuals in a way fully analogous to the frank CLEAN pipeline.
+
+Steps:
+1. Go to the `galario_fit/galario_mod_res_CLEAN/` folder.
+2. Modify `run_CLEAN_galario.py` in the same way you would modify `frank_fit/run_CLEAN_frank.py`.  
+   The script will read the CLEAN and geometry parameters from `frank_fit/diskdictionary.py` to ensure consistency between frank and galario imaging.
+3. Run the pipeline:
+   ```
+   python run_CLEAN_galario.py
+   ```
+
 # 4. Analysis
 Within the `analysis` folder, the following Python notebooks are available to perform further analyses on the data and on the output of the frank fit:
 - `visibility_plot_frank_fit.ipynb`: Plots the real and imaginary part of the visibilities as a function of the deprojected baseline, for both the data and the frank fit.
