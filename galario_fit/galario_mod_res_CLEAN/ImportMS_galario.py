@@ -24,7 +24,7 @@ def ImportMS_galario(msfile, modelfile, suffix='model', make_resid=False):
     unflagged = np.squeeze(np.any(flag, axis=0) == False)
 
     # load the model visibilities
-    galario_model = np.loadtxt(modelfile, skiprows=4)
+    galario_model = np.loadtxt(modelfile)
     mdl = galario_model[:,2] + 1j*galario_model[:,3]
 
     # replace with the model visibilities (equal in both polarizations)
