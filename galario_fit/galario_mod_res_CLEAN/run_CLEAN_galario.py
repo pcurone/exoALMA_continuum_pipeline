@@ -29,10 +29,9 @@ target = 'AA_Tau'
 
 # Select model
 selected_model = "FourRingProfile_PointSource"
+model_1D = True
 nwalkers = 100
 
-uvtable_galario = max(glob.glob(f"../uvtable_galario_model_{selected_model}_{nwalkers}walkers_*totiterations.txt"),
-                      key=lambda f: int(re.search(r"_(\d+)totiterations\.txt$", f).group(1)))
 
 im_dat = True   # CLEAN the observed data
 im_res = True   # CLEAN the residuals (observed data - frank model) 
@@ -49,6 +48,14 @@ int_vmax_factor = 1.0    # sets the fraction of the image intensity maximum (1.0
 
 FOV_gofish = 5     # Clip the image cube down to a specific field-of-view spanning a range ``FOV``, where ``FOV`` is in [arcsec]
 dr_gofish = None     #  Width of the annuli to split the integrated region into in [arcsec]. Default is quater of the beam major axis
+
+# Select the uvtable with the highest number of total iterations
+uvtable_galario = max(glob.glob(f"../products/{target}_uvtable_galario_model_{selected_model}_{nwalkers}walkers_*iters.txt"),
+                      key=lambda f: int(re.search(r"_(\d+)iters\.txt$", f).group(1)))
+
+# Select the intensity radial profile from the model with the highest number of total iterations
+int_rad_profile_galario = max(glob.glob(f"../products/{target}_radial_intensity_profile_galario_model_{selected_model}_{nwalkers}walkers_*iters.txt"),
+                              key=lambda f: int(re.search(r"_(\d+)iters\.txt$", f).group(1)))
 
 
 ###############################
@@ -193,9 +200,9 @@ print('....')
 
 # load residual image
 if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
-        rhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_resid_robust{disk.disk[target]['crobust']}.tt0.fits")
+        rhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_resid_galario_robust{disk.disk[target]['crobust']}.tt0.fits")
 else:
-        rhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_resid_robust{disk.disk[target]['crobust']}.fits")
+        rhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_resid_galario_robust{disk.disk[target]['crobust']}.fits")
 rimg = np.squeeze(rhdu[0].data)
 
 if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
@@ -297,182 +304,224 @@ cb.ax.minorticks_on()
 # adjust layout
 fig.subplots_adjust(wspace=0.02)
 fig.subplots_adjust(left=0.11, right=0.89, bottom=0.1, top=0.98)
-fig.savefig(f"figs/{target}_resid_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
+fig.savefig(f"figs/{target}_resid_galario_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
 
 
-"""
-######################################
-##### PLOT THE SWEEP FRANK MODEL
-######################################
+if model_1D:
+        ######################################
+        ##### PLOT THE SWEEP GALARIO MODEL
+        ######################################
 
-sol = load_sol(f'fits/{target}_frank_sol.obj')
-r_frank = sol.r
-Inu_frank = sol.I
+        geom = FixedGeometry(inc=disk.disk[target]['incl'], PA=disk.disk[target]['PA'],
+                             dRA=disk.disk[target]['dx'], dDec=disk.disk[target]['dy'])
+        
+        # Load radial profile (R, total, components...)
+        radprof = np.loadtxt(int_rad_profile_galario)
 
-sweep_img = sweep_profile(r_frank, Inu_frank, project=True, geom=sol.geometry, dr=1e-3)
-Tb_sweep_img = Jysr_to_Tb(sweep_img[0], freq)
-im_bounds_sweep = (sweep_img[1], -sweep_img[1], -sweep_img[2], sweep_img[2])
+        r_galario      = radprof[:,0]   # radius
+        Inu_galario    = radprof[:,1]   # total intensity
+        components_arr = radprof[:,2:]  # individual components (shape: nR, ncomp)
 
-### Plot the data image
-plt.style.use('default')
-fig = plt.figure(figsize=(7.0, 5.9))
-gs  = gridspec.GridSpec(1, 2, width_ratios=(1, 0.04))
-ax = fig.add_subplot(gs[0,0])
+        ncomp = components_arr.shape[1]
+        component_labels = [f"f{i}" for i in range(ncomp)]
 
-# intensity limits, and stretch
-norm = ImageNormalize(vmin=0, vmax=1 * int_vmax_factor, stretch=AsinhStretch())
-cmap = 'inferno'
+        sweep_img = sweep_profile(r_galario, Inu_galario, project=True, geom=geom, dr=1e-3)
+        Tb_sweep_img = Jysr_to_Tb(sweep_img[0], freq)
+        im_bounds_sweep = (sweep_img[1], -sweep_img[1], -sweep_img[2], sweep_img[2])
 
-im = ax.imshow(sweep_img[0]/np.nan_to_num(sweep_img[0]).max(), origin='lower', cmap=cmap, extent=im_bounds_sweep, 
-               norm=norm, aspect='equal')
+        ### Plot the data image
+        plt.style.use('default')
+        fig = plt.figure(figsize=(7.0, 5.9))
+        gs  = gridspec.GridSpec(1, 2, width_ratios=(1, 0.04))
+        ax = fig.add_subplot(gs[0,0])
 
-#annotations
-tt = np.linspace(-np.pi, np.pi, 91)
-inclr = np.radians(disk.disk[target]['incl'])
-PAr = np.radians(disk.disk[target]['PA'])
-rEllipse = disk.disk[target]['rEllipse']
-for ir in range(len(rEllipse)):
-    # mark gap boundaries
-    xe, ye = rEllipse[ir] * np.cos(tt) * np.cos(inclr), rEllipse[ir] * np.sin(tt)
-    ax.plot( xe * np.cos(PAr) + ye * np.sin(PAr),
-        -xe * np.sin(PAr) + ye * np.cos(PAr), '-', color='lightgray',
-        lw=0.8, alpha=0.8)
+        # intensity limits, and stretch
+        norm = ImageNormalize(vmin=0, vmax=1 * int_vmax_factor, stretch=AsinhStretch())
+        cmap = 'inferno'
 
-# mark Rout
-xb, yb = rout * np.cos(tt) * np.cos(inclr), rout * np.sin(tt)
-ax.plot( xb * np.cos(PAr) + yb * np.sin(PAr),
-        -xb * np.sin(PAr) + yb * np.cos(PAr), '--', color='lightgray',
-        lw=0.8, alpha=0.5)
+        im = ax.imshow(sweep_img[0]/np.nan_to_num(sweep_img[0]).max(), origin='lower', cmap=cmap, extent=im_bounds_sweep, 
+                norm=norm, aspect='equal')
 
-# limits, labeling
-ax.set_xlim(dRA_lims)
-ax.set_ylim(dDEC_lims)
-ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
-ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+        #annotations
+        tt = np.linspace(-np.pi, np.pi, 91)
+        inclr = np.radians(disk.disk[target]['incl'])
+        PAr = np.radians(disk.disk[target]['PA'])
+        rEllipse = disk.disk[target]['rEllipse']
+        for ir in range(len(rEllipse)):
+                # mark gap boundaries
+                xe, ye = rEllipse[ir] * np.cos(tt) * np.cos(inclr), rEllipse[ir] * np.sin(tt)
+                ax.plot( xe * np.cos(PAr) + ye * np.sin(PAr),
+                        -xe * np.sin(PAr) + ye * np.cos(PAr), '-', color='lightgray',
+                        lw=0.8, alpha=0.8)
 
-# axes style
-ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
-ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
-ax.yaxis.set_major_locator(MultipleLocator(maj_ticks))
-ax.yaxis.set_minor_locator(MultipleLocator(min_ticks)) 
-ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=5,width=2.5, length=6,direction='in',color='w')
-ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=5,width=1.5, length=4,direction='in',color='w')
-for side in ax.spines.keys():  # 'top', 'bottom', 'left', 'right'
-    ax.spines[side].set_linewidth(1)
+        # mark Rout
+        xb, yb = rout * np.cos(tt) * np.cos(inclr), rout * np.sin(tt)
+        ax.plot( xb * np.cos(PAr) + yb * np.sin(PAr),
+                -xb * np.sin(PAr) + yb * np.cos(PAr), '--', color='lightgray',
+                lw=0.8, alpha=0.5)
 
+        # limits, labeling
+        ax.set_xlim(dRA_lims)
+        ax.set_ylim(dDEC_lims)
+        ax.set_xlabel(r'RA offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
+        ax.set_ylabel(r'Dec offset  ($^{\prime\prime}$)', fontsize = 17, labelpad=10)
 
-# add a scalebar
-cbax = fig.add_subplot(gs[:,1])
-cb = Colorbar(ax=cbax, mappable=im, orientation='vertical',
-              ticklocation='right')
-cb.outline.set_linewidth(2)
-cb.ax.tick_params(which='major', labelsize=14,width=2.5, length=6,direction='in')
-cb.ax.tick_params(which='minor', labelsize=14,width=1.5, length=4,direction='in')
-cb.set_label('Normalized intensity', rotation=270, labelpad=26, fontsize = 17)
-cb.ax.minorticks_on()
-
-# adjust layout
-fig.subplots_adjust(wspace=0.02)
-fig.subplots_adjust(left=0.11, right=0.89, bottom=0.1, top=0.98)
-
-fig.savefig(f'figs/{target}_Sweep_modelimage.pdf', bbox_inches='tight')
+        # axes style
+        ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+        ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
+        ax.yaxis.set_major_locator(MultipleLocator(maj_ticks))
+        ax.yaxis.set_minor_locator(MultipleLocator(min_ticks)) 
+        ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=5,width=2.5, length=6,direction='in',color='w')
+        ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=5,width=1.5, length=4,direction='in',color='w')
+        for side in ax.spines.keys():  # 'top', 'bottom', 'left', 'right'
+                ax.spines[side].set_linewidth(1)
 
 
-#################################
-##### BRIGHTNESS RADIAL PROFILE
-#################################
+        # add a scalebar
+        cbax = fig.add_subplot(gs[:,1])
+        cb = Colorbar(ax=cbax, mappable=im, orientation='vertical',
+                ticklocation='right')
+        cb.outline.set_linewidth(2)
+        cb.ax.tick_params(which='major', labelsize=14,width=2.5, length=6,direction='in')
+        cb.ax.tick_params(which='minor', labelsize=14,width=1.5, length=4,direction='in')
+        cb.set_label('Normalized intensity', rotation=270, labelpad=26, fontsize = 17)
+        cb.ax.minorticks_on()
 
-# plot the radial profile and compare with the CLEAN map
+        # adjust layout
+        fig.subplots_adjust(wspace=0.02)
+        fig.subplots_adjust(left=0.11, right=0.89, bottom=0.1, top=0.98)
 
-sol = load_sol(f'fits/{target}_frank_sol.obj')
-r_frank = sol.r
-Inu_frank = sol.I
-
-# Convolve the frank profile with the CLEAN beam
-# Units: [arcsec], [arcsec], [deg]
-clean_beam = {'bmaj':bmaj, 'bmin':bmin, 'beam_pa':bPA}
-Inu_frank_convolved = convolve_profile(r_frank, Inu_frank, disk.disk[target]['incl'], disk.disk[target]['PA'], clean_beam)
-
-# convert to brightness temperatures (full Planck law)
-Tb_frank = Jysr_to_Tb(Inu_frank, freq)
-Tb_frank_convolved = Jysr_to_Tb(Inu_frank_convolved, freq)
-# convert to brightness temperatures (R-J limit)
-Tb_frank_RJ = Jysr_to_Tb_RJ(Inu_frank, freq)
-Tb_frank_convolved_RJ = Jysr_to_Tb_RJ(Inu_frank_convolved, freq)
-
-# Obtain the CLEAN profile using the imagecube function from gofish
-if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
-        cube = imagecube(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.tt0.fits", FOV=FOV_gofish)
-else:
-        cube = imagecube(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits", FOV=FOV_gofish)
-r_clean, I_clean, dI_clean = cube.radial_profile(x0=disk.disk[target]['dx'], y0=disk.disk[target]['dy'], inc=disk.disk[target]['incl'], PA=disk.disk[target]['PA'], dr=dr_gofish)
-# convert to brightness temperatures (full Planck law)
-Tb_clean, dTb_clean = Jysr_to_Tb_err(Jybeam_to_Jysr(I_clean, bmin, bmaj), Jybeam_to_Jysr(dI_clean, bmin, bmaj), freq)
-# convert to brightness temperatures (R-J limit)
-Tb_clean_RJ, dTb_clean_RJ = Jysr_to_Tb_RJ_err(Jybeam_to_Jysr(I_clean, bmin, bmaj), Jybeam_to_Jysr(dI_clean, bmin, bmaj), freq)
+        fig.savefig(f'figs/{target}_Sweep_galario_modelimage.pdf', bbox_inches='tight')
 
 
-##### Plot (full Planck) #####
-fig, axs = plt.subplots(1, 2, figsize=(18,5))
-plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.35)
+        #################################
+        ##### BRIGHTNESS RADIAL PROFILE
+        #################################
 
-axs[0].hlines(y=0, xmin=0, xmax=img_lim*rout, color='gray', linestyle='dashed', linewidth=1)
+        # plot the radial profile and compare with the CLEAN map
 
-for ax in axs.flat:
-    ax.fill_between(r_clean, Tb_clean-dTb_clean, Tb_clean+dTb_clean, color='gray', alpha=0.5)
-    ax.plot(r_clean, Tb_clean, 'k', lw=3, label='CLEAN')
-    ax.plot(r_frank, Tb_frank, 'r', lw=3, label='Frank logarithmic fit')
-    ax.plot(r_frank[Tb_frank_convolved>0], Tb_frank_convolved[Tb_frank_convolved>0], 'b', lw=3, label='Frank convolved')
+        # Convolve the galario profile with the CLEAN beam
+        # Units: [arcsec], [arcsec], [deg]
+        clean_beam = {'bmaj':bmaj, 'bmin':bmin, 'beam_pa':bPA}
+        Inu_galario_convolved = convolve_profile(r_galario, Inu_galario, disk.disk[target]['incl'], disk.disk[target]['PA'], clean_beam)
 
-    ax.set_xlim([0, img_lim*rout])
-    ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
-    ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
+        # convert to brightness temperatures (full Planck law)
+        Tb_galario = Jysr_to_Tb(Inu_galario, freq)
+        Tb_galario_convolved = Jysr_to_Tb(Inu_galario_convolved, freq)
+        # convert to brightness temperatures (R-J limit)
+        Tb_galario_RJ = Jysr_to_Tb_RJ(Inu_galario, freq)
+        Tb_galario_convolved_RJ = Jysr_to_Tb_RJ(Inu_galario_convolved, freq)
 
-    ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=7,width=2.5, length=6,direction='in',color='k')
-    ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=7,width=1.5, length=4,direction='in',color='k')
-    ax.set_xlabel(r'$R \,\,$ [arcsec]', fontsize = 17, labelpad=10)
-    ax.set_ylabel('Brightness temperature [K]', fontsize = 17, labelpad=10)
-    ax.legend(fontsize=13)
-    
-    for side in ax.spines.keys():
-        ax.spines[side].set_linewidth(3) 
-
-axs[1].set_yscale('log')
-axs[1].set_ylim([1.1, np.amax(Tb_frank)*1.3]) 
-
-fig.savefig(f"figs/{target}_Tb_profile_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
+        # Obtain the CLEAN profile using the imagecube function from gofish
+        if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
+                cube = imagecube(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.tt0.fits", FOV=FOV_gofish)
+        else:
+                cube = imagecube(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_data_robust{disk.disk[target]['crobust']}.fits", FOV=FOV_gofish)
+        r_clean, I_clean, dI_clean = cube.radial_profile(x0=disk.disk[target]['dx'], y0=disk.disk[target]['dy'], inc=disk.disk[target]['incl'], PA=disk.disk[target]['PA'], dr=dr_gofish)
+        # convert to brightness temperatures (full Planck law)
+        Tb_clean, dTb_clean = Jysr_to_Tb_err(Jybeam_to_Jysr(I_clean, bmin, bmaj), Jybeam_to_Jysr(dI_clean, bmin, bmaj), freq)
+        # convert to brightness temperatures (R-J limit)
+        Tb_clean_RJ, dTb_clean_RJ = Jysr_to_Tb_RJ_err(Jybeam_to_Jysr(I_clean, bmin, bmaj), Jybeam_to_Jysr(dI_clean, bmin, bmaj), freq)
 
 
-##### Plot (R-J limit) #####
-fig, axs = plt.subplots(1, 2, figsize=(18,5))
-plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.35)
+        ##### Plot (Jy/sr) #####
+        fig, axs = plt.subplots(1, 2, figsize=(18,5))
+        plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.35)
 
-axs[0].hlines(y=0, xmin=0, xmax=img_lim*rout, color='gray', linestyle='dashed', linewidth=1)
+        axs[0].hlines(y=0, xmin=0, xmax=img_lim*rout, color='gray', linestyle='dashed', linewidth=1)
 
-for ax in axs.flat:
-    ax.fill_between(r_clean, Tb_clean_RJ-dTb_clean_RJ, Tb_clean_RJ+dTb_clean_RJ, color='gray', alpha=0.5)
-    ax.plot(r_clean, Tb_clean_RJ, 'k', lw=3, label='CLEAN')
-    ax.plot(r_frank, Tb_frank_RJ, 'r', lw=3, label='Frank logarithmic fit')
-    ax.plot(r_frank[Tb_frank_convolved_RJ>0], Tb_frank_convolved_RJ[Tb_frank_convolved_RJ>0], 'b', lw=3, label='Frank convolved')
+        for ax in axs.flat:
+                ax.fill_between(r_clean, Jybeam_to_Jysr(I_clean, bmin, bmaj)-Jybeam_to_Jysr(dI_clean, bmin, bmaj), Jybeam_to_Jysr(I_clean, bmin, bmaj)+Jybeam_to_Jysr(dI_clean, bmin, bmaj), color='gray', alpha=0.5)
+                ax.plot(r_clean, Jybeam_to_Jysr(I_clean, bmin, bmaj), 'k', lw=3, label='CLEAN')
+                ax.plot(r_galario, Inu_galario, 'r', lw=3, label='galario fit')
+                #ax.plot(r_galario[Tb_galario_convolved>0], Tb_galario_convolved[Tb_galario_convolved>0], 'b', lw=3, label='galario convolved')
+                # plot components
+                for i, comp in enumerate(components_arr.T):
+                        ax.plot(r_galario, comp, ls='--', lw=1.5, alpha=0.9, color='orange', label=f'{component_labels[i]}')
 
-    ax.set_xlim([0, img_lim*rout])
-    ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
-    ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
+                ax.set_xlim([0, img_lim*rout])
+                ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+                ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
 
-    ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=7,width=2.5, length=6,direction='in',color='k')
-    ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=7,width=1.5, length=4,direction='in',color='k')
-    ax.set_xlabel(r'$R \,\,$ [arcsec]', fontsize = 17, labelpad=10)
-    ax.set_ylabel('Brightness temperature [K]', fontsize = 17, labelpad=10)
-    ax.legend(fontsize=13)
-    
-    for side in ax.spines.keys():
-        ax.spines[side].set_linewidth(3) 
+                ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=7,width=2.5, length=6,direction='in',color='k')
+                ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=7,width=1.5, length=4,direction='in',color='k')
+                ax.set_xlabel(r'$R \,\,$ [arcsec]', fontsize = 17, labelpad=10)
+                ax.set_ylabel('Intensity [Jy/sr]', fontsize = 17, labelpad=10)
+                ax.legend(fontsize=13)
+                
+                for side in ax.spines.keys():
+                        ax.spines[side].set_linewidth(3) 
 
-axs[1].set_yscale('log')
-axs[1].set_ylim([0.01, np.amax(Tb_frank_RJ)*1.3]) 
+        axs[1].set_yscale('log')
+        axs[1].set_ylim([1.1, np.amax(Inu_galario)*1.3]) 
 
-fig.savefig(f"figs/{target}_Tb_profile_RJ_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
-"""
+        fig.savefig(f"figs/{target}_tot_Jysr_profile_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
+
+        ##### Plot (full Planck) #####
+        fig, axs = plt.subplots(1, 2, figsize=(18,5))
+        plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.35)
+
+        axs[0].hlines(y=0, xmin=0, xmax=img_lim*rout, color='gray', linestyle='dashed', linewidth=1)
+
+        for ax in axs.flat:
+                ax.fill_between(r_clean, Tb_clean-dTb_clean, Tb_clean+dTb_clean, color='gray', alpha=0.5)
+                ax.plot(r_clean, Tb_clean, 'k', lw=3, label='CLEAN')
+                ax.plot(r_galario, Tb_galario, 'r', lw=3, label='galario fit')
+                #ax.plot(r_galario[Tb_galario_convolved>0], Tb_galario_convolved[Tb_galario_convolved>0], 'b', lw=3, label='galario convolved')
+                for i, comp in enumerate(components_arr.T):
+                        ax.plot(r_galario, Jysr_to_Tb(comp, freq), ls='--', lw=1.5, alpha=0.9, color='orange', label=f'{component_labels[i]}')
+
+                ax.set_xlim([0, img_lim*rout])
+                ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+                ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
+
+                ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=7,width=2.5, length=6,direction='in',color='k')
+                ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=7,width=1.5, length=4,direction='in',color='k')
+                ax.set_xlabel(r'$R \,\,$ [arcsec]', fontsize = 17, labelpad=10)
+                ax.set_ylabel('Brightness temperature [K]', fontsize = 17, labelpad=10)
+                ax.legend(fontsize=13)
+                
+                for side in ax.spines.keys():
+                        ax.spines[side].set_linewidth(3) 
+
+        axs[1].set_yscale('log')
+        axs[1].set_ylim([1.1, np.amax(Tb_galario)*1.3]) 
+
+        fig.savefig(f"figs/{target}_tot_Tb_profile_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
+
+
+        ##### Plot (R-J limit) #####
+        fig, axs = plt.subplots(1, 2, figsize=(18,5))
+        plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.35)
+
+        axs[0].hlines(y=0, xmin=0, xmax=img_lim*rout, color='gray', linestyle='dashed', linewidth=1)
+
+        for ax in axs.flat:
+                ax.fill_between(r_clean, Tb_clean_RJ-dTb_clean_RJ, Tb_clean_RJ+dTb_clean_RJ, color='gray', alpha=0.5)
+                ax.plot(r_clean, Tb_clean_RJ, 'k', lw=3, label='CLEAN')
+                ax.plot(r_galario, Tb_galario_RJ, 'r', lw=3, label='galario fit')
+                #ax.plot(r_galario[Tb_galario_convolved_RJ>0], Tb_galario_convolved_RJ[Tb_galario_convolved_RJ>0], 'b', lw=3, label='galario convolved')
+                for i, comp in enumerate(components_arr.T):
+                        ax.plot(r_galario, Jysr_to_Tb_RJ(comp, freq), ls='--', lw=1.5, alpha=0.9, color='orange', label=f'{component_labels[i]}')
+                
+                ax.set_xlim([0, img_lim*rout])
+                ax.xaxis.set_major_locator(MultipleLocator(maj_ticks))
+                ax.xaxis.set_minor_locator(MultipleLocator(min_ticks))
+
+                ax.tick_params(which='major',axis='both',right=True,top=True, labelsize=14, pad=7,width=2.5, length=6,direction='in',color='k')
+                ax.tick_params(which='minor',axis='both',right=True,top=True, labelsize=14, pad=7,width=1.5, length=4,direction='in',color='k')
+                ax.set_xlabel(r'$R \,\,$ [arcsec]', fontsize = 17, labelpad=10)
+                ax.set_ylabel('Brightness temperature [K]', fontsize = 17, labelpad=10)
+                ax.legend(fontsize=13)
+                
+                for side in ax.spines.keys():
+                        ax.spines[side].set_linewidth(3) 
+
+        axs[1].set_yscale('log')
+        axs[1].set_ylim([0.01, np.amax(Tb_galario_RJ)*1.3]) 
+
+        fig.savefig(f"figs/{target}_tot_Tb_profile_RJ_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
+
 
 
 ##########################
@@ -494,14 +543,14 @@ if im_mdl:
 
 
 ######################################
-##### PLOT THE CLEANED FRANK MODEL
+##### PLOT THE CLEANED GALARIO MODEL
 ######################################
 
 # load model
 if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
-        dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_model_robust{disk.disk[target]['crobust']}.tt0.fits")
+        dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_model_galario_robust{disk.disk[target]['crobust']}.tt0.fits")
 else:
-        dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_model_robust{disk.disk[target]['crobust']}.fits")
+        dhdu = fits.open(f"CLEAN/robust{disk.disk[target]['crobust']}/{target}_model_galario_robust{disk.disk[target]['crobust']}.fits")
 dimg, hd = np.squeeze(dhdu[0].data), dhdu[0].header
 
 # parse coordinate frame indices into physical numbers
@@ -576,4 +625,4 @@ cb.ax.minorticks_on()
 # adjust layout
 fig.subplots_adjust(wspace=0.02)
 fig.subplots_adjust(left=0.11, right=0.89, bottom=0.1, top=0.98)
-fig.savefig(f"figs/{target}_CLEAN_modelimage_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
+fig.savefig(f"figs/{target}_CLEAN_modelimage_galario_robust{disk.disk[target]['crobust']}.pdf", bbox_inches='tight')
