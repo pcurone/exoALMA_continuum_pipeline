@@ -5,18 +5,7 @@ import numpy as np
 
 target = 'PDS_66'
 
-MS_filename = f'{target}_time_ave_continuum'
-listobs(vis=MS_filename+'.ms', listfile=MS_filename+'.ms.txt', overwrite=True) 
-
-contspws = ''   # Select the spws you're interested here
-split(vis=MS_filename+'.ms', 
-      width=100,
-      spw=contspws,
-      timebin='30s',
-      datacolumn='data',
-      outputvis=target+'_continuum.ms', 
-      keepflags=False)
-
+# Call your ms files as target+'_continuum.ms'
 listobs(vis=target+'_continuum.ms', listfile=target+'_continuum.ms.txt', overwrite=True) 
 
 ###################################################
