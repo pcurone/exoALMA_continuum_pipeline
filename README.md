@@ -7,7 +7,7 @@ This pipeline was initially inspired by the procedure developed in  [Andrews et 
 In addition to standard Python packages, you’ll need the following tools installed:
 - [CASA](https://casa.nrao.edu/casa_obtaining.shtml).
 - For galario:
-  - [galario](https://mtazzari.github.io/galario/). _(Note: On macOS with ARM chips, galario installation may require creating an x86 environment using Rosetta 2 and installing via Conda)_.
+  - [galario](https://mtazzari.github.io/galario/). _(Note: On macOS with ARM chips, galario installation may require creating an x86 environment using Rosetta 2 and installing via Conda. In general, it is recommended to install galario via Conda, creating a dedicated environment with Python 3.8)_.
   - [uvplot](https://github.com/mtazzari/uvplot).
   - [emcee](https://emcee.readthedocs.io/en/stable/user/install/), [corner](https://corner.readthedocs.io/en/latest/install/), and [h5py](https://docs.h5py.org/en/latest/build.html).
 - For frank:
@@ -138,4 +138,4 @@ Within the `analysis` folder, the following Python notebooks are available to pe
 
 
 ### Acknowledgments
-I would like to thank the collaborators who reported bugs or whose discussions helped improve the pipeline: Daniele Fasano, Carolina Agurto, and Andrés Zuleta.
+I would like to thank the collaborators who reported bugs or whose discussions helped improve the pipeline: Daniele Fasano, Carolina Agurto, Andrés Zuleta, and Octave Mullie.
