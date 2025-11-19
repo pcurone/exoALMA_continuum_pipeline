@@ -126,7 +126,7 @@ Steps:
 
 # 4. Analysis
 Within the `analysis` folder, the following Python notebooks are available to perform further analyses on the data and on the output of the frank fit:
-- `visibility_plot_frank_fit.ipynb`: Plots the real and imaginary part of the visibilities as a function of the deprojected baseline, for both the data and the frank fit.
+- `visibility_plot_frank_galario_fit.ipynb`: Plots the real and imaginary part of the visibilities as a function of the deprojected baseline, for data, frank fit, and galario fit.
 - `polar_plots.ipynb`: Produces polar plots (radius vs. azimuthal angle) of the observed data and the frank residuals.
 - `intensity_profile_CLEAN.ipynb`: Computes the azimuthally averaged intensity radial profile of the CLEAN image.
 - `intensity_profile_radii_frank_fit.ipynb`: Extracts the intensity radial profile of the frank model and estimates the continuum radial extents (R68, R90, R95).
