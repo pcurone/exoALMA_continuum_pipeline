@@ -36,6 +36,12 @@ def CentralGauss_SingleRingProfile(f0, sigma0, f1, r1, sigma1, Rmin, dR, nR):
     R = np.linspace(Rmin, Rmin + dR*nR, nR, endpoint=False)
     return f0 * np.exp(-(R)**2./(2.*sigma0**2.)) + f1 * np.exp(-(R-r1)**2./(2.*sigma1**2.)) 
 
+def CentralGauss_DoubleRingProfile(f0, sigma0, f1, r1, sigma1, f2, r2, sigma2, Rmin, dR, nR):
+    """ Central Gaussian + double Gaussian ring brightness profile """
+    # radial grid
+    R = np.linspace(Rmin, Rmin + dR*nR, nR, endpoint=False)
+    return f0 * np.exp(-(R)**2./(2.*sigma0**2.)) + f1 * np.exp(-(R-r1)**2./(2.*sigma1**2.)) + f2 * np.exp(-(R-r2)**2./(2.*sigma2**2.))
+
 def DoubleRingProfile(f1, r1, sigma1, f2, r2, sigma2, Rmin, dR, nR):
     """ Double Gaussian ring brightness profile. """
     # radial grid
@@ -97,6 +103,11 @@ model_registry = {
         "function": CentralGauss_SingleRingProfile,
         "parameters": ["f0", "sigma0", "f1", "r1", "sigma1", "Rmin", "dR", "nR"],
         "labels": ["$f_0$", r"$\sigma_0$", "$f_1$", r"$r_1$", r"$\sigma_1$", "inc", "PA", r"$\Delta RA$", r"$\Delta Dec$"]
+    },
+    "CentralGauss_DoubleRingProfile": {
+        "function": CentralGauss_DoubleRingProfile,
+        "parameters": ["f0", "sigma0", "f1", "r1", "sigma1", "f2", "r2", "sigma2", "Rmin", "dR", "nR"],
+        "labels": ["$f_0$", r"$\sigma_0$", "$f_1$", r"$r_1$", r"$\sigma_1$", "$f_2$", r"$r_2$", r"$\sigma_2$", "inc", "PA", r"$\Delta RA$", r"$\Delta Dec$"]
     },
     "DoubleRingProfile": {
         "function": DoubleRingProfile,
