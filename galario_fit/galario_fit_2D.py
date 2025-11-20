@@ -25,6 +25,7 @@ else:
   
 from uvplot import COLUMNS_V0
 from uvplot import UVTable
+
 from galario_2D_model_functions import model_registry
 ##########################################################################
 
