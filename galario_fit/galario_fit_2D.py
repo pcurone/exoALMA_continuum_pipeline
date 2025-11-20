@@ -14,11 +14,16 @@ from emcee import EnsembleSampler, autocorr
 from emcee.backends import HDFBackend
 import corner
 
+import galario
 # Convert from arcsec and deg to radians
 from galario import arcsec, deg
-from galario.double import chi2Image, sampleImage, get_image_size
+# Use GPU if available, otherwise fall back to CPU
+if galario.HAVE_CUDA:
+    from galario.double_cuda import chi2Image, sampleImage, get_image_size
+else:
+    from galario.double import chi2Image, sampleImage, get_image_size
+  
 from uvplot import COLUMNS_V0
-
 from uvplot import UVTable
 from galario_2D_model_functions import model_registry
 ##########################################################################
