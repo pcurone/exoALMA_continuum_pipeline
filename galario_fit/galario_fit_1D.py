@@ -18,9 +18,10 @@ if galario.HAVE_CUDA:
     from galario.double_cuda import chi2Profile, sampleProfile, get_image_size
 else:
     from galario.double import chi2Profile, sampleProfile, get_image_size
+    
 from uvplot import COLUMNS_V0
-
 from uvplot import UVTable
+
 from galario_1D_model_functions import model_registry
 ##########################################################################
 
