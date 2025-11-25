@@ -15,8 +15,10 @@ import galario
 from galario import arcsec, deg
 # Use GPU if available, otherwise fall back to CPU
 if galario.HAVE_CUDA:
+    print("Using GPUs")
     from galario.double_cuda import chi2Profile, sampleProfile, get_image_size
 else:
+    print("Using CPUs")
     from galario.double import chi2Profile, sampleProfile, get_image_size
     
 from uvplot import COLUMNS_V0
