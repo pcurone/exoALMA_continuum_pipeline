@@ -183,6 +183,8 @@ if os.path.exists(backend_filename):
     # Retrieve the last positions if samples exist
     if backend.iteration > 0:
         pos = backend.get_last_sample().coords
+        # Adding jitter to resumed walkers to avoid condition number error
+        pos += 1e-4 * np.random.randn(*pos.shape)
     else:
         pos = [p0 + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
 else:
