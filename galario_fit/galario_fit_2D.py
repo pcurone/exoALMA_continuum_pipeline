@@ -206,6 +206,8 @@ if os.path.exists(backend_filename):
     # Retrieve the last positions if samples exist
     if backend.iteration > 0:
         pos = backend.get_last_sample().coords
+        # Adding jitter to resumed walkers to avoid condition number error
+        pos += 1e-4 * np.random.randn(*pos.shape)
     elif uniform_pos:
         print('Drawing the initial positions of the walkers from a uniform distribution over the intervals set by the priors')
         pos = unif_pos
