@@ -74,6 +74,14 @@ def FourRingProfile_PointSource(f0, f1, r1, sigma1, f2, r2, sigma2, f3, r3, sigm
     R = np.linspace(Rmin, Rmin + dR*nR, nR, endpoint=False)
     return f0 * delta + f1 * np.exp(-(R-r1)**2./(2.*sigma1**2.)) + f2 * np.exp(-(R-r2)**2./(2.*sigma2**2.)) + f3 * np.exp(-(R-r3)**2./(2.*sigma3**2.)) + f4 * np.exp(-(R-r4)**2./(2.*sigma4**2.))
 
+def CentralGauss_FourRingProfile(f0, sigma0, f1, r1, sigma1, f2, r2, sigma2, f3, r3, sigma3, f4, r4, sigma4, Rmin, dR, nR):
+    """ Four Gaussian rings + central Gaussian brightness profile """
+    # radial grid
+    R = np.linspace(Rmin, Rmin + dR*nR, nR, endpoint=False)
+    return f0 * np.exp(-(R)**2./(2.*sigma0**2.)) + f1 * np.exp(-(R-r1)**2./(2.*sigma1**2.)) + f2 * np.exp(-(R-r2)**2./(2.*sigma2**2.)) + f3 * np.exp(-(R-r3)**2./(2.*sigma3**2.)) + f4 * np.exp(-(R-r4)**2./(2.*sigma4**2.))
+
+
+
 ##############################
 #####   MODEL REGISTRY   #####
 ##############################
@@ -149,6 +157,16 @@ model_registry = {
         ],
         "labels": [
             "$f_0$", "$f_1$", r"$r_1$", r"$\sigma_1$", "$f_2$", r"$r_2$", r"$\sigma_2$", 
+            "$f_3$", r"$r_3$", r"$\sigma_3$", "$f_4$", r"$r_4$", r"$\sigma_4$", "inc", "PA", r"$\Delta RA$", r"$\Delta Dec$"
+        ]
+    },
+    "CentralGauss_FourRingProfile": {
+        "function": CentralGauss_FourRingProfile,
+        "parameters": [
+            "f0", "sigma0","f1", "r1", "sigma1", "f2", "r2", "sigma2", "f3", "r3", "sigma3", "f4", "r4", "sigma4", "Rmin", "dR", "nR"
+        ],
+        "labels": [
+            "$f_0$", r"$\sigma_0$","$f_1$", r"$r_1$", r"$\sigma_1$", "$f_2$", r"$r_2$", r"$\sigma_2$", 
             "$f_3$", r"$r_3$", r"$\sigma_3$", "$f_4$", r"$r_4$", r"$\sigma_4$", "inc", "PA", r"$\Delta RA$", r"$\Delta Dec$"
         ]
     }
