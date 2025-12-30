@@ -128,10 +128,10 @@ Steps:
 Within the `analysis` folder, the following Python notebooks are available to perform further analyses on the data and on the output of the frank fit:
 - `visibility_plot_frank_galario_fit.ipynb`: Plots the real and imaginary part of the visibilities as a function of the deprojected baseline, for data, frank fit, and galario fit.
 - `polar_plots.ipynb`: Produces polar plots (radius vs. azimuthal angle) of the observed data and the frank residuals.
-- `intensity_profile_CLEAN.ipynb`: Computes the azimuthally averaged intensity radial profile of the CLEAN image.
-- `intensity_profile_radii_frank_fit.ipynb`: Extracts the intensity radial profile of the frank model and estimates the continuum radial extents (R68, R90, R95).
+- `intensity_profile_radii_CLEAN.ipynb`: Computes the azimuthally averaged intensity radial profile of the CLEAN image and obtains the continuum radial extents (R68, R90, R95) from the CLEAN profile.
+- `intensity_profile_radii_frank_fit.ipynb`: Extracts the intensity radial profile of the frank model and compute the continuum radial extents (R68, R90, R95) from the frank profile.
 - `define_annular_substructures_frank_fit.ipynb`: Identifies and characterizes annular substructures (rings and gaps) from the frank fit (see Section 4.1 of the exoALMA IV paper).
-- `compute_flux_density_with_uncertainty.ipynb`: Measures the integrated flux density of the disk using a mask, and estimates its statistical uncertainty by calculating the rms of the flux density inside several non-overlapping masks placed away from the disk, in regions containing only noise.
+- `compute_flux_density_with_uncertainty_dust_mass.ipynb`: Measures the integrated flux density of the disk using a mask, and estimates its statistical uncertainty by calculating the rms of the flux density inside several non-overlapping masks placed away from the disk, in regions containing only noise. It also estimates the dust mass using the Hildebrand (1983 relation).
 - `compute_NAI.ipynb`: Computes the nonaxisymmetry index (NAI) of the source (see Section 4.2 of the exoALMA IV paper).
 - `compute_lambda_out.ipynb`: Determines $\lambda_\mathrm{out}$, the scale length of the faint outer disk emission falloff (see Section 5.4 of the exoALMA IV paper).
 
