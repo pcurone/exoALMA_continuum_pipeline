@@ -42,6 +42,10 @@ sigma_PA = 1  # deg
 sigma_dRA = bmaj/(2*np.sqrt(2*np.log(2)))/3   # fwhm to sigma/3 arcsec (3 sigmas within 1 beam, ~10 mas in accordance to estimates from ALMA Technical Handbook)
 sigma_dDec = bmaj/(2*np.sqrt(2*np.log(2)))/3  # fwhm to sigma/3 arcsec (3 sigmas within 1 beam, ~10 mas in accordance to estimates from ALMA Technical Handbook)
 
+# wsmooth and alpha range
+wsmooth_range = [1e-4, 1e-3, 1e-2, 1e-1]
+alpha_range = [1.05, 1.10, 1.20, 1.30]
+
 # load the visibility data
 dat = np.load(f'../../data/{target}_continuum.vis.npz')
 u, v, vis, wgt = dat['u'], dat['v'], dat['Vis'], dat['Wgt']
@@ -63,6 +67,10 @@ with open('Int_bootstrap.txt', 'w') as file_Int:
             i_PA = np.random.normal(PA, sigma_PA)
             i_dRA = np.random.normal(dRA, sigma_dRA)
             i_dDec = np.random.normal(dDec, sigma_dDec)
+
+            # Pick hyperparameters randomly from the defined lists
+            i_wsmooth = np.random.choice(wsmooth_range)
+            i_alpha = np.random.choice(alpha_range)
     
             # set the disk viewing geometry with new parameters
             geom = FixedGeometry(i_inc, i_PA, i_dRA, i_dDec)
@@ -70,8 +78,8 @@ with open('Int_bootstrap.txt', 'w') as file_Int:
             # configure the fitting code setup
             FF = FrankFitter(Rmax=1.5*disk.disk[target]['rout'], geometry=geom, 
                              N=disk.disk[target]['hyp-Ncoll'], 
-                             alpha=disk.disk[target]['hyp-alpha'], 
-                             weights_smooth=disk.disk[target]['hyp-wsmth'],
+                             alpha=i_alpha, 
+                             weights_smooth=i_wsmooth,
                              method='LogNormal')
     
             # fit the visibilities
