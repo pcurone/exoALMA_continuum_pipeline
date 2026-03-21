@@ -34,7 +34,6 @@ disk['AA_Tau'] = {'name': 'AA_Tau',
                  'crobust': 0.5,     # CLEAN robust parameter
                  'ctaper': [],     # CLEAN uv-taper
                  'cniter': 50000,     # CLEAN Maximum number of iterations 
-                 'cthresh': 1.0,     # Multiple of the noise rms, CLEAN threshold
-                 'RMS': 0.056,   # mJy, noise rms
+                 'cnsigma': 1.0,     # Multiple of the noise rms, CLEAN threshold
                  'rEllipse': [],     # arcsec, ellipses to be drawn in the residual image
 }
