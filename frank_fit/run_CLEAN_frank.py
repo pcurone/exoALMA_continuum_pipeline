@@ -547,6 +547,7 @@ if im_mdl:
     print('Imaging model')
     print('....')
     os.environ['TARGET'] = target
+    os.environ['rms_mJy'] = str(rms_mJy)
     os.system('casa --nogui --nologerr --nologfile -c model_imaging.py') 
     print('....')
     print('Finished imaging model')
