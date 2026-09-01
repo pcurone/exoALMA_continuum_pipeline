@@ -26,6 +26,7 @@ disk['AA_Tau'] = {'name': 'AA_Tau',
                  'cdeconvolver': 'multiscale',     # CLEAN deconvolver
                  'cscales': [0, 8, 15, 30, 80],     # pixels, CLEAN scales for multiscale deconvolver
                  'cnterms': 1,     # CLEAN Number of Taylor coefficients in the spectral model (for deconvolver mtmfs)
+                 'cgridder': 'standard',     # CLEAN gridder, use 'mosaic' if data include ACA data
                  'ccell': '0.01arcsec',     # CLEAN cell size
                  'cimsize': 1024,     # CLEAN image size 
                  'cgain': 0.1,     # CLEAN gain parameter
