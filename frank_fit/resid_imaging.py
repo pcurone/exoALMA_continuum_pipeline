@@ -7,6 +7,8 @@ import diskdictionary as disk
 # Get target from environment variable
 target = os.environ['TARGET']
 
+rms_mJy = os.environ['rms_mJy']
+
 # Set the right folder
 folder_path = f"CLEAN/robust{disk.disk[target]['crobust']}"
 if not os.path.exists(folder_path):
@@ -43,7 +45,7 @@ tclean(vis='CLEAN/'+target+'_continuum.resid.ms', imagename=imagename, specmode=
        gridder=grid, cell=disk.disk[target]['ccell'], gain=disk.disk[target]['cgain'],
        cycleniter=disk.disk[target]['ccycleniter'], cyclefactor=disk.disk[target]['ccyclefactor'], 
        weighting='briggs', robust=disk.disk[target]['crobust'], uvtaper=disk.disk[target]['ctaper'],
-       niter=disk.disk[target]['cniter'], threshold="0.0mJy", nsigma=disk.disk[target]['cnsigma'],
+       niter=disk.disk[target]['cniter'], threshold=f"{rms_mJy * disk.disk[target]['cnsigma']}mJy", 
        interactive=False, savemodel='none')
 
 # Export FITS files of the original 

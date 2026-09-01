@@ -45,7 +45,8 @@ tclean(vis='CLEAN/'+target+'_continuum.model.ms', imagename=imagename, specmode=
        gridder=grid, cell=disk.disk[target]['ccell'], gain=disk.disk[target]['cgain'],
        cycleniter=disk.disk[target]['ccycleniter'], cyclefactor=disk.disk[target]['ccyclefactor'], 
        weighting='briggs', robust=disk.disk[target]['crobust'], uvtaper=disk.disk[target]['ctaper'],
-       niter=disk.disk[target]['cniter'], threshold=f"{rms_mJy * disk.disk[target]['cnsigma']}mJy", savemodel='none')
+       niter=disk.disk[target]['cniter'], threshold=f"{rms_mJy * disk.disk[target]['cnsigma']}mJy", 
+       interactive=False, savemodel='none')
 
 # Export FITS files of the original 
 if disk.disk[target]['cdeconvolver'] == 'mtmfs' and disk.disk[target]['cnterms'] > 1:
