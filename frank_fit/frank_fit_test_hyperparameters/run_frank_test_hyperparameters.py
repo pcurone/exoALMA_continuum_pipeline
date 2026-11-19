@@ -28,38 +28,47 @@ alpha_range = [1.05, 1.10, 1.20, 1.30]
 for method in methods:
     for wsmooth in wsmooth_range:
         for alpha in alpha_range:
-    
+
             print('....')
             print(f'frank fit with method {method}, wsmooth={wsmooth}, and alpha={alpha}')
             print('....')
 
-            # load the visibility data
-            dat = np.load(f'../../data/{target}_continuum.vis.npz')
-            u, v, vis, wgt = dat['u'], dat['v'], dat['Vis'], dat['Wgt']
+            try:
+                # load the visibility data
+                dat = np.load(f'../../data/{target}_continuum.vis.npz')
+                u, v, vis, wgt = dat['u'], dat['v'], dat['Vis'], dat['Wgt']
 
-            # set the disk viewing geometry
-            geom = FixedGeometry(disk.disk[target]['incl'], disk.disk[target]['PA'], 
-                                    dRA=disk.disk[target]['dx'], 
-                                    dDec=disk.disk[target]['dy'])
+                # set the disk viewing geometry
+                geom = FixedGeometry(disk.disk[target]['incl'], disk.disk[target]['PA'],
+                                     dRA=disk.disk[target]['dx'],
+                                     dDec=disk.disk[target]['dy'])
 
-            # configure the fitting code setup
-            FF = FrankFitter(Rmax=disk.disk[target]['Rmax']*disk.disk[target]['rout'], 
-                                geometry=geom, 
-                                N=disk.disk[target]['hyp-Ncoll'], 
-                                alpha=alpha, 
-                                weights_smooth=wsmooth,
-                                method=method)
+                # configure the fitting code setup
+                FF = FrankFitter(Rmax=disk.disk[target]['Rmax']*disk.disk[target]['rout'],
+                                 geometry=geom,
+                                 N=disk.disk[target]['hyp-Ncoll'],
+                                 alpha=alpha,
+                                 weights_smooth=wsmooth,
+                                 method=method)
 
-            # fit the visibilities
-            sol = FF.fit(u, v, vis, wgt)
-            
-            # Producing the figure with the results
-            make_full_fig(u, v, vis, wgt, sol, bin_widths=[1e4, 5e4], save_prefix=f'./{target}_method{method}_wsmooth{wsmooth}_alpha{alpha}')
+                # fit the visibilities
+                sol = FF.fit(u, v, vis, wgt)
 
-            # save the fit
-            #save_fit(u, v, vis, wgt, sol, prefix=f'./{target}_method{method}_wsmooth{wsmooth}_alpha{alpha}')
+                # Producing the figure with the results
+                make_full_fig(u, v, vis, wgt, sol, bin_widths=[1e4, 5e4],
+                              save_prefix=f'./{target}_method{method}_wsmooth{wsmooth}_alpha{alpha}')
+
+                # save the fit
+                #save_fit(u, v, vis, wgt, sol, prefix=f'./{target}_method{method}_wsmooth{wsmooth}_alpha{alpha}')
+
+            except Exception as e:
+                # Log the failure and move on to the next hyperparameter combination
+                print('....')
+                print(f'FAILED frank fit with method {method}, wsmooth={wsmooth}, and alpha={alpha}: {e}')
+                print('....')
+                continue
 
             print('....')
-            print('Finished frank fit with method {method}, wsmooth={wsmooth}, and alpha={alpha}')
+            print(f'Finished frank fit with method {method}, wsmooth={wsmooth}, and alpha={alpha}')
             print('....')
    
