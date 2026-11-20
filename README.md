@@ -1,5 +1,7 @@
 This is the pipeline used to analyze the continuum emission of the [exoALMA Large Program](https://www.exoalma.com), with results presented in [Curone et al. 2025 (exoALMA IV)](https://ui.adsabs.harvard.edu/abs/2025ApJ...984L...9C/abstract).
 
+The current version uses `nsigma` thresholding in `tclean`. The previous version, without `nsigma`, is available in the [`old-main`](https://github.com/pcurone/exoALMA_continuum_pipeline/tree/old-main) branch.
+
 ![](./image_exoALMA_pipeline_AA_Tau.png)
 
 This pipeline was initially inspired by the procedure developed in  [Andrews et al. 2021](https://ui.adsabs.harvard.edu/abs/2021ApJ...916...51A/abstract) ([GitHub repo](https://github.com/seanandrews/DSHARP_CPDs)).
