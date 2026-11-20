@@ -26,6 +26,7 @@ disk['AA_Tau'] = {'name': 'AA_Tau',
                  'cdeconvolver': 'multiscale',     # CLEAN deconvolver
                  'cscales': [0, 8, 15, 30, 80],     # pixels, CLEAN scales for multiscale deconvolver
                  'cnterms': 1,     # CLEAN Number of Taylor coefficients in the spectral model (for deconvolver mtmfs)
+                 'cgridder': 'standard',     # CLEAN gridder, use 'mosaic' if data include ACA data
                  'ccell': '0.01arcsec',     # CLEAN cell size
                  'cimsize': 1024,     # CLEAN image size 
                  'cgain': 0.1,     # CLEAN gain parameter
@@ -33,8 +34,7 @@ disk['AA_Tau'] = {'name': 'AA_Tau',
                  'ccyclefactor': 1.0,     # CLEAN Scaling on PSF sidelobe level to compute the minor-cycle stopping threshold
                  'crobust': 0.5,     # CLEAN robust parameter
                  'ctaper': [],     # CLEAN uv-taper
-                 'cniter': 50000,     # CLEAN Maximum number of iterations 
-                 'cthresh': 1.0,     # Multiple of the noise rms, CLEAN threshold
-                 'RMS': 0.056,   # mJy, noise rms
+                 'cniter': 50000,     # CLEAN Maximum number of iterations 
+                 'cnsigma': 1.0,     # Multiple of the noise rms, CLEAN threshold
                  'rEllipse': [],     # arcsec, ellipses to be drawn in the residual image
 }

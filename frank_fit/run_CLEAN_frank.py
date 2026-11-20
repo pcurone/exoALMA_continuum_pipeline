@@ -265,7 +265,8 @@ gs  = gridspec.GridSpec(1, 2, width_ratios=(1, 0.04))
 # image (sky-plane)
 ax = fig.add_subplot(gs[0,0])
 norm = ImageNormalize(vmin=res_vmin, vmax=res_vmax, stretch=LinearStretch())
-im = ax.imshow(1e3*rimg / disk.disk[target]['RMS'], origin='lower', 
+rms_mJy = np.loadtxt(f"CLEAN/robust{disk.disk[target]['crobust']}/Info_image_data_{target}_robust{disk.disk[target]['crobust']}.txt")[5]
+im = ax.imshow(1e3*rimg / rms_mJy, origin='lower', 
                 cmap=discrete_cmap, extent=im_bounds, 
                 norm=norm, aspect='equal')
 
@@ -546,6 +547,7 @@ if im_mdl:
     print('Imaging model')
     print('....')
     os.environ['TARGET'] = target
+    os.environ['rms_mJy'] = str(rms_mJy)
     os.system('casa --nogui --nologerr --nologfile -c model_imaging.py') 
     print('....')
     print('Finished imaging model')
