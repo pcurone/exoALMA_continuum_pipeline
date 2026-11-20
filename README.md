@@ -1,7 +1,5 @@
 This is the pipeline used to analyze the continuum emission of the [exoALMA Large Program](https://www.exoalma.com), with results presented in [Curone et al. 2025 (exoALMA IV)](https://ui.adsabs.harvard.edu/abs/2025ApJ...984L...9C/abstract).
 
-The current version uses `nsigma` thresholding in `tclean`. The previous version, without `nsigma`, is available in the [`old-main`](https://github.com/pcurone/exoALMA_continuum_pipeline/tree/old-main) branch.
-
 ![](./image_exoALMA_pipeline_AA_Tau.png)
 
 This pipeline was initially inspired by the procedure developed in  [Andrews et al. 2021](https://ui.adsabs.harvard.edu/abs/2021ApJ...916...51A/abstract) ([GitHub repo](https://github.com/seanandrews/DSHARP_CPDs)).
@@ -21,6 +19,8 @@ This pipeline consists of four main steps, organized by folders and to be follow
 2. `galario_fit/` folder: scripts to run galario (either in 1D or 2D). The goal of this step is to retrieve the geometrical parameters of the disk (inclination, position angle, RA and Dec offsets between the disk center and the observation phase center). Given the nature of the galario fit, this step is by far the most time-consuming. However, it can be skipped if the geometrical parameters are already known from the literature or other methods.
 3. `frank_fit/` folder: scripts to run the frank model, perform CLEANing, and generate the model and residual images.
 4. `analysis/` folder: a suite of Python notebooks to carry out further analysis on the data and the obtained frank model fit.
+
+The current version uses `nsigma` thresholding in `tclean`. The previous version, without `nsigma`, is available in the [`old-main`](https://github.com/pcurone/exoALMA_continuum_pipeline/tree/old-main) branch.
 
 # 1. From Measurement Set (MS) to uv tables
 
