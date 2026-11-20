@@ -2,7 +2,7 @@ This is the pipeline used to analyze the continuum emission of the [exoALMA Larg
 
 ![](./image_exoALMA_pipeline_AA_Tau.png)
 
-This pipeline was initially inspired by the procedure developed in  [Andrews et al. 2021](https://ui.adsabs.harvard.edu/abs/2021ApJ...916...51A/abstract) ([GitHub repo](https://github.com/seanandrews/DSHARP_CPDs)).
+This pipeline was initially inspired by the procedure developed in [Andrews et al. 2021](https://ui.adsabs.harvard.edu/abs/2021ApJ...916...51A/abstract) ([GitHub repo](https://github.com/seanandrews/DSHARP_CPDs)).
 
 In addition to standard Python packages, you’ll need the following tools installed:
 - [CASA](https://casa.nrao.edu/casa_obtaining.shtml).
